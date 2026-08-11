@@ -145,7 +145,6 @@ export function PetaExplorer({ points }: { points: MapPoint[] }) {
           {[
             { icon: "🛍️", label: "Pin oranye = UMKM" },
             { icon: "🏫", label: "Pin hijau = Sekolah" },
-            { icon: "🏡", label: "Garis hijau = batas desa" },
           ].map(({ icon, label }) => (
             <div key={label} className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="text-base">{icon}</span> {label}

@@ -1,44 +1,23 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { ArrowRight, Store, School, Map, TrendingUp } from "lucide-react"
+import Image from "next/image"
+import { ArrowRight, Store, School, Map, Camera } from "lucide-react"
 
-// ── Spring config from SKILL ─────────────────────────────────────────────────
 const spring = { type: "spring", stiffness: 100, damping: 20 } as const
 
-// ── Stagger container (parent + children in same client tree — SKILL rule) ──
 const containerVariants = {
   hidden: {},
-  show: {
-    transition: { staggerChildren: 0.1, delayChildren: 0.15 },
-  },
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.15 } },
 }
+
 const itemVariants = {
   hidden: { opacity: 0, y: 28 },
   show:  { opacity: 1, y: 0, transition: spring },
 }
 
-// ── Isolated floating card — perpetual motion (SKILL: isolate CPU-heavy) ────
-function FloatingBadge() {
-  return (
-    <motion.div
-      animate={{ y: [0, -8, 0] }}
-      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-      className="absolute -right-6 -top-6 z-10 flex items-center gap-2.5 rounded-2xl border border-border bg-card px-4 py-3 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.12)]"
-    >
-      <div className="flex size-8 items-center justify-center rounded-xl bg-[#0D9488]/10">
-        <Map className="size-4 text-[#0D9488]" />
-      </div>
-      <div>
-        <p className="text-[11px] font-bold text-foreground">Peta Interaktif</p>
-        <p className="text-[10px] text-muted-foreground">Temukan lokasinya</p>
-      </div>
-    </motion.div>
-  )
-}
-
-// ── Isolated pulse dot (perpetual micro-animation) ───────────────────────────
 function PulseDot() {
   return (
     <span className="relative flex size-2">
@@ -48,15 +27,74 @@ function PulseDot() {
   )
 }
 
+// ── Slot foto desa — ganti src setelah upload foto ke /public/ ──────────────
+function FotoDesa({
+  src,
+  alt,
+  label,
+  delay,
+  className = "",
+}: {
+  src: string
+  alt: string
+  label: string
+  delay: number
+  className?: string
+}) {
+  const [err, setErr] = useState(false)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, ...spring }}
+      className={`group relative overflow-hidden rounded-2xl border border-border bg-muted shadow-[0_8px_32px_-8px_rgba(0,0,0,0.15)] ${className}`}
+    >
+      {err ? (
+        /* Placeholder jika foto belum ada */
+        <div className="flex h-full min-h-[180px] flex-col items-center justify-center gap-3 p-6 text-center">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-muted-foreground/10">
+            <Camera className="size-6 text-muted-foreground/40" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground/60">
+              Upload foto ke /public/ lalu ganti src
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="relative aspect-[16/10]">
+            <Image
+              src={src}
+              alt={alt}
+              fill
+              sizes="(max-width: 1024px) 100vw, 45vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              onError={() => setErr(true)}
+              priority
+            />
+            {/* Label overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 px-4 py-3">
+              <p className="text-xs font-bold text-white drop-shadow-sm">{label}</p>
+            </div>
+          </div>
+        </>
+      )}
+    </motion.div>
+  )
+}
+
 export default function HeroSection() {
   return (
     <section className="relative flex min-h-[100dvh] items-center overflow-hidden">
-      {/* ── Background: subtle gradient ─────────────────────────────────── */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background via-background to-muted/40" />
 
-      {/* ── Background: grid texture (fixed pseudo — SKILL DOM Cost rule) ─ */}
+      {/* ── Background ─────────────────────────────────────────────────── */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background via-background to-muted/40" />
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `linear-gradient(to right, currentColor 1px, transparent 1px),
                             linear-gradient(to bottom, currentColor 1px, transparent 1px)`,
@@ -64,18 +102,29 @@ export default function HeroSection() {
         }}
       />
 
-      <div className="relative mx-auto w-full max-w-7xl px-6 py-28 lg:py-0">
-        {/* ── Asymmetric grid: 3fr left, 2fr right (DESIGN_VARIANCE 8) ─── */}
-        <div className="grid gap-16 lg:grid-cols-[3fr_2fr] lg:items-center lg:gap-20">
+      <div className="relative mx-auto w-full max-w-7xl px-6 py-24 lg:py-0">
+        <div className="grid gap-16 lg:grid-cols-[1fr_1fr] lg:items-center lg:gap-16">
 
-          {/* LEFT: Content ──────────────────────────────────────────────── */}
+          {/* ── LEFT: Konten ─────────────────────────────────────────────── */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="space-y-8"
+            className="space-y-7"
           >
-            {/* Pre-headline badge */}
+            {/* Logo */}
+            <motion.div variants={itemVariants}>
+              <Image
+                src="/logo.png"
+                alt="Logo Potensi Sedayu"
+                width={64}
+                height={64}
+                className="rounded-2xl shadow-md"
+                priority
+              />
+            </motion.div>
+
+            {/* Badge lokasi */}
             <motion.div variants={itemVariants}>
               <span className="inline-flex items-center gap-2.5 rounded-full border border-border bg-background/80 px-4 py-1.5 text-xs font-semibold text-muted-foreground backdrop-blur-sm">
                 <PulseDot />
@@ -83,9 +132,9 @@ export default function HeroSection() {
               </span>
             </motion.div>
 
-            {/* Headline — ANTI-CENTER BIAS, left-aligned ──────────────── */}
+            {/* Headline */}
             <motion.div variants={itemVariants} className="space-y-4">
-              <h1 className="font-serif text-5xl font-semibold leading-[1.08] tracking-tight text-foreground sm:text-6xl lg:text-[4.5rem]">
+              <h1 className="font-serif text-5xl font-semibold leading-[1.08] tracking-tight text-foreground sm:text-6xl lg:text-[4.25rem]">
                 Potensi Ekonomi
                 <br />
                 <span className="text-muted-foreground/50">Desa dalam</span>
@@ -93,7 +142,6 @@ export default function HeroSection() {
                 Satu{" "}
                 <span className="relative inline-block">
                   Platform
-                  {/* Animated underline — transform only (SKILL perf rule) */}
                   <motion.span
                     className="absolute -bottom-1 left-0 block h-[3px] w-full origin-left rounded-full bg-sector-umkm"
                     initial={{ scaleX: 0 }}
@@ -102,14 +150,13 @@ export default function HeroSection() {
                   />
                 </span>
               </h1>
-
-              <p className="max-w-[52ch] text-base leading-relaxed text-muted-foreground">
+              <p className="max-w-[48ch] text-base leading-relaxed text-muted-foreground">
                 Direktori lengkap UMKM dan institusi pendidikan Desa Sedayu.
                 Temukan, jelajahi, dan kenali potensi nyata warga desa.
               </p>
             </motion.div>
 
-            {/* CTA buttons — tactile feedback (SKILL Rule 5) ─────────── */}
+            {/* CTA buttons */}
             <motion.div
               variants={itemVariants}
               className="flex flex-wrap items-center gap-3"
@@ -122,7 +169,6 @@ export default function HeroSection() {
                 Direktori UMKM
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
-
               <Link
                 href="/sekolah"
                 className="inline-flex items-center gap-2.5 rounded-xl border border-border bg-background px-5 py-3 text-sm font-bold text-foreground transition hover:bg-muted hover:-translate-y-[1px] active:scale-[.98] active:translate-y-0"
@@ -130,7 +176,6 @@ export default function HeroSection() {
                 <School className="size-4" />
                 Direktori Sekolah
               </Link>
-
               <Link
                 href="/peta"
                 className="inline-flex items-center gap-2.5 rounded-xl border border-border bg-background px-5 py-3 text-sm font-bold text-foreground transition hover:bg-muted hover:-translate-y-[1px] active:scale-[.98] active:translate-y-0"
@@ -141,73 +186,34 @@ export default function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* RIGHT: Visual panel — slides in from right ────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.35, ...spring }}
-            className="relative hidden lg:block"
-          >
-            <FloatingBadge />
+          {/* ── RIGHT: 2 Slot Foto Desa ───────────────────────────────────── */}
+          <div className="hidden flex-col gap-4 lg:flex">
 
-            {/* Main card */}
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.07)]">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Sektor Aktif
-                </p>
-                <TrendingUp className="size-4 text-muted-foreground/40" />
-              </div>
+            {/*
+              📸 CARA MENAMBAHKAN FOTO:
+              1. Simpan foto ke folder /public/ di project
+              2. Ganti src="/foto-gerbang.jpg" dengan nama file foto kamu
+              3. Contoh: src="/gerbang-desa.jpg" atau src="/foto-desa-1.jpg"
+              4. Lakukan hal yang sama untuk foto ke-2
+            */}
 
-              <div className="space-y-2">
-                {/* UMKM row */}
-                <Link
-                  href="/umkm"
-                  className="group flex items-center gap-3.5 rounded-xl border border-transparent bg-blue-50/60 px-4 py-3.5 transition hover:border-blue-200/60 dark:bg-blue-950/20"
-                >
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/40">
-                    <Store className="size-4 text-sector-umkm" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground">UMKM</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Usaha Mikro, Kecil & Menengah
-                    </p>
-                  </div>
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground/30 transition group-hover:translate-x-0.5 group-hover:text-sector-umkm" />
-                </Link>
+            <FotoDesa
+              src="/foto-gerbang.jpg"
+              alt="Gerbang Masuk Desa Sedayu"
+              label="📍 Gerbang Masuk Desa Sedayu"
+              delay={0.4}
+            />
 
-                {/* Sekolah row */}
-                <Link
-                  href="/sekolah"
-                  className="group flex items-center gap-3.5 rounded-xl border border-transparent bg-teal-50/60 px-4 py-3.5 transition hover:border-teal-200/60 dark:bg-teal-950/20"
-                >
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-900/40">
-                    <School className="size-4 text-[#0D9488]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground">Sekolah</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Institusi Pendidikan Desa
-                    </p>
-                  </div>
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground/30 transition group-hover:translate-x-0.5 group-hover:text-[#0D9488]" />
-                </Link>
-              </div>
+            <FotoDesa
+              src="/foto-umkm.jpg"
+              alt="UMKM Unggulan Desa Sedayu"
+              label="🛍️ UMKM Unggulan Desa Sedayu"
+              delay={0.55}
+              className="ml-8" // ← offset sedikit ke kanan untuk depth
+            />
 
-              {/* Divider + footer */}
-              <div className="mt-4 border-t border-border pt-4">
-                <Link
-                  href="/peta"
-                  className="group flex items-center gap-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
-                >
-                  <Map className="size-3.5" />
-                  Jelajahi peta interaktif
-                  <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </div>
-            </div>
-          </motion.div>
+          </div>
+
         </div>
 
         {/* Scroll indicator */}
