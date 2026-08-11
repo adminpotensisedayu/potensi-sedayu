@@ -4,9 +4,12 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, Store, School, Map, Camera, MapPin } from "lucide-react"
+import {
+  ArrowRight, Store, School, Map, Camera,
+  MapPin, Sparkles, CheckCircle2, ChevronRight,
+} from "lucide-react"
 
-// ─── Typewriter hook ────────────────────────────────────────────────────────
+// ─── Typewriter ──────────────────────────────────────────────────────────────
 const PHRASES = [
   "UMKM Lokal yang Berkembang",
   "Pendidikan Berkualitas",
@@ -26,16 +29,13 @@ function useTypewriter(
   const [deleting, setDeleting]   = useState(false)
   const [cursor, setCursor]       = useState(true)
 
-  // Cursor blink
   useEffect(() => {
     const id = setInterval(() => setCursor((v) => !v), 530)
     return () => clearInterval(id)
   }, [])
 
-  // Typewriter logic
   useEffect(() => {
     const word = phrases[phraseIdx]
-
     if (!deleting && charIdx < word.length) {
       const id = setTimeout(() => {
         setDisplay(word.slice(0, charIdx + 1))
@@ -43,12 +43,10 @@ function useTypewriter(
       }, typeSpeed)
       return () => clearTimeout(id)
     }
-
     if (!deleting && charIdx === word.length) {
       const id = setTimeout(() => setDeleting(true), pauseMs)
       return () => clearTimeout(id)
     }
-
     if (deleting && charIdx > 0) {
       const id = setTimeout(() => {
         setDisplay(word.slice(0, charIdx - 1))
@@ -56,7 +54,6 @@ function useTypewriter(
       }, deleteSpeed)
       return () => clearTimeout(id)
     }
-
     if (deleting && charIdx === 0) {
       setDeleting(false)
       setPhraseIdx((i) => (i + 1) % phrases.length)
@@ -66,20 +63,39 @@ function useTypewriter(
   return { display, cursor }
 }
 
-// ─── Spring config ──────────────────────────────────────────────────────────
+// ─── Animated counter ────────────────────────────────────────────────────────
+function useCounter(target: number, duration = 1400, delay = 0) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const start = Date.now()
+      const id = setInterval(() => {
+        const elapsed  = Date.now() - start
+        const progress = Math.min(elapsed / duration, 1)
+        const eased    = 1 - Math.pow(2, -10 * progress) // easeOutExpo
+        setCount(Math.round(eased * target))
+        if (progress >= 1) clearInterval(id)
+      }, 16)
+      return () => clearInterval(id)
+    }, delay)
+    return () => clearTimeout(timer)
+  }, [target, duration, delay])
+  return count
+}
+
+// ─── Shared spring ───────────────────────────────────────────────────────────
 const spring = { type: "spring", stiffness: 100, damping: 20 } as const
 
 const containerVariants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.11, delayChildren: 0.1 } },
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
 }
-
 const itemVariants = {
   hidden: { opacity: 0, y: 24 },
   show:  { opacity: 1, y: 0, transition: spring },
 }
 
-// ─── Pulse dot ──────────────────────────────────────────────────────────────
+// ─── Pulse dot ───────────────────────────────────────────────────────────────
 function PulseDot() {
   return (
     <span className="relative flex size-2 shrink-0">
@@ -89,22 +105,13 @@ function PulseDot() {
   )
 }
 
-// ─── Photo slot ─────────────────────────────────────────────────────────────
+// ─── Photo slot ──────────────────────────────────────────────────────────────
 function FotoDesa({
-  src,
-  alt,
-  label,
-  delay,
-  className = "",
+  src, alt, label, delay, className = "",
 }: {
-  src: string
-  alt: string
-  label: string
-  delay: number
-  className?: string
+  src: string; alt: string; label: string; delay: number; className?: string
 }) {
   const [err, setErr] = useState(false)
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 24, scale: 0.96 }}
@@ -113,7 +120,6 @@ function FotoDesa({
       className={`group relative overflow-hidden rounded-2xl border border-border shadow-[0_16px_48px_-12px_rgba(0,0,0,0.18)] ${className}`}
     >
       {err ? (
-        /* ── Placeholder sebelum foto diupload ── */
         <div className="flex min-h-[190px] flex-col items-center justify-center gap-3 bg-muted p-6 text-center">
           <div className="flex size-12 items-center justify-center rounded-2xl bg-muted-foreground/10">
             <Camera className="size-6 text-muted-foreground/30" />
@@ -128,17 +134,13 @@ function FotoDesa({
       ) : (
         <div className="relative aspect-[16/10]">
           <Image
-            src={src}
-            alt={alt}
-            fill
+            src={src} alt={alt} fill
             sizes="(max-width: 1024px) 100vw, 45vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
             onError={() => setErr(true)}
             priority
           />
-          {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-          {/* Label */}
           <div className="absolute bottom-0 left-0 right-0 flex items-center gap-1.5 px-4 py-3">
             <MapPin className="size-3 shrink-0 text-white/80" />
             <p className="text-xs font-bold text-white drop-shadow">{label}</p>
@@ -149,20 +151,50 @@ function FotoDesa({
   )
 }
 
-// ─── Main component ─────────────────────────────────────────────────────────
+// ─── Floating badge on photo ─────────────────────────────────────────────────
+function FloatingVerifiedBadge() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ delay: 1.0, ...spring }}
+      className="absolute -bottom-5 -left-4 z-10"
+    >
+      <motion.div
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+        className="flex items-center gap-2.5 rounded-2xl border border-border bg-background/95 px-4 py-3 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.15)] backdrop-blur-sm"
+      >
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-teal-500/10">
+          <CheckCircle2 className="size-4 text-teal-600" />
+        </div>
+        <div>
+          <p className="text-[11px] font-bold text-foreground">Terverifikasi Resmi</p>
+          <p className="text-[10px] text-muted-foreground">Data aktif Desa Sedayu</p>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+// ─── MAIN ────────────────────────────────────────────────────────────────────
 export default function HeroSection() {
   const { display, cursor } = useTypewriter(PHRASES)
+
+  // Animated counters — mulai setelah 800ms
+  const umkmCount     = useCounter(42, 1400, 800)
+  const sekolahCount  = useCounter(7,  1200, 900)
+  const kategoriCount = useCounter(9,  1300, 1000)
 
   return (
     <section className="relative flex min-h-[100dvh] flex-col overflow-hidden">
 
-      {/* ── Backgrounds ─────────────────────────────────────────── */}
-      {/* Base gradient */}
+      {/* ── Backgrounds ─────────────────────────────────────────────── */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background via-background to-muted/50" />
 
       {/* Grid texture */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `
             linear-gradient(to right, currentColor 1px, transparent 1px),
@@ -172,45 +204,41 @@ export default function HeroSection() {
         }}
       />
 
-      {/* Decorative blurred orbs */}
-      <div className="pointer-events-none absolute -right-40 -top-40 size-[520px] rounded-full bg-teal-500/7 blur-[110px]" />
-      <div className="pointer-events-none absolute -bottom-24 -left-24 size-[420px] rounded-full bg-amber-500/6 blur-[90px]" />
+      {/* Orbs — 3 titik berbeda */}
+      <div className="pointer-events-none absolute -right-32 -top-32 size-[600px] rounded-full bg-teal-500/8 blur-[120px]" />
+      <div className="pointer-events-none absolute -bottom-24 -left-24 size-[480px] rounded-full bg-amber-500/7 blur-[100px]" />
+      <div className="pointer-events-none absolute bottom-1/3 right-1/3 size-[280px] rounded-full bg-emerald-500/5 blur-[70px]" />
 
-      {/* ── Main grid ───────────────────────────────────────────── */}
+      {/* ── Main content ─────────────────────────────────────────────── */}
       <div className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-6 py-24 lg:py-20">
-        <div className="grid gap-14 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-16">
+        <div className="grid gap-14 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:gap-14">
 
-          {/* ══ LEFT — Text content ═══════════════════════════════ */}
+          {/* ══ LEFT ════════════════════════════════════════════════ */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="show"
             className="space-y-7"
           >
-
-            {/* Logo + nama platform */}
+            {/* Logo pill */}
             <motion.div variants={itemVariants}>
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-border bg-background/80 p-2.5 pr-4 shadow-sm backdrop-blur-sm">
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-border bg-background/90 p-2.5 pr-5 shadow-sm backdrop-blur-sm">
                 <Image
                   src="/logo.png"
-                  alt="Logo Potensi Sedayu"
-                  width={40}
-                  height={40}
+                  alt="Potensi Sedayu"
+                  width={42}
+                  height={42}
                   className="rounded-xl"
                   priority
                 />
                 <div>
-                  <p className="text-sm font-bold text-foreground leading-tight">
-                    Potensi Sedayu
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    Platform Digital Desa
-                  </p>
+                  <p className="text-sm font-bold text-foreground leading-tight">Potensi Sedayu</p>
+                  <p className="text-[10px] text-muted-foreground">Platform Digital Desa</p>
                 </div>
               </div>
             </motion.div>
 
-            {/* Badge lokasi */}
+            {/* Location badge */}
             <motion.div variants={itemVariants}>
               <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-4 py-1.5 text-xs font-semibold text-muted-foreground backdrop-blur-sm">
                 <PulseDot />
@@ -218,9 +246,9 @@ export default function HeroSection() {
               </span>
             </motion.div>
 
-            {/* Headline besar */}
-            <motion.div variants={itemVariants} className="space-y-2">
-              <h1 className="font-serif text-5xl font-semibold leading-[1.07] tracking-tight text-foreground sm:text-6xl lg:text-[4rem] xl:text-[4.4rem]">
+            {/* Headline */}
+            <motion.div variants={itemVariants} className="space-y-3">
+              <h1 className="font-serif text-5xl font-semibold leading-[1.07] tracking-tight text-foreground sm:text-6xl lg:text-[3.9rem] xl:text-[4.4rem]">
                 Potensi Ekonomi
                 <br />
                 <span className="text-muted-foreground/40">Desa dalam</span>
@@ -237,7 +265,7 @@ export default function HeroSection() {
                 </span>
               </h1>
 
-              {/* ── Typewriter ── */}
+              {/* Typewriter */}
               <div className="flex h-8 items-center">
                 <p className="text-base text-muted-foreground">
                   Temukan{" "}
@@ -252,7 +280,7 @@ export default function HeroSection() {
               </div>
             </motion.div>
 
-            {/* Deskripsi */}
+            {/* Description */}
             <motion.p
               variants={itemVariants}
               className="max-w-[46ch] text-sm leading-relaxed text-muted-foreground"
@@ -261,44 +289,97 @@ export default function HeroSection() {
               Temukan, jelajahi, dan kenali potensi nyata warga desa.
             </motion.p>
 
-            {/* CTA buttons */}
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-wrap items-center gap-3"
-            >
+            {/* Secondary CTAs */}
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2.5">
               <Link
                 href="/umkm"
-                className="group inline-flex items-center gap-2.5 rounded-xl bg-foreground px-5 py-3 text-sm font-bold text-background shadow-[0_4px_20px_-4px_rgba(0,0,0,0.25)] transition hover:-translate-y-[2px] hover:shadow-[0_10px_30px_-6px_rgba(0,0,0,0.22)] active:scale-[.98] active:translate-y-0"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-background/80 px-4 py-2.5 text-sm font-semibold text-foreground backdrop-blur-sm transition hover:bg-muted hover:-translate-y-[1px] active:scale-[.98]"
               >
-                <Store className="size-4" />
+                <Store className="size-3.5" />
                 Direktori UMKM
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/sekolah"
-                className="inline-flex items-center gap-2.5 rounded-xl border border-border bg-background/80 px-5 py-3 text-sm font-bold text-foreground backdrop-blur-sm transition hover:bg-muted hover:-translate-y-[1px] active:scale-[.98]"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-background/80 px-4 py-2.5 text-sm font-semibold text-foreground backdrop-blur-sm transition hover:bg-muted hover:-translate-y-[1px] active:scale-[.98]"
               >
-                <School className="size-4" />
+                <School className="size-3.5" />
                 Direktori Sekolah
               </Link>
               <Link
                 href="/peta"
-                className="inline-flex items-center gap-2.5 rounded-xl border border-border bg-background/80 px-5 py-3 text-sm font-bold text-foreground backdrop-blur-sm transition hover:bg-muted hover:-translate-y-[1px] active:scale-[.98]"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-background/80 px-4 py-2.5 text-sm font-semibold text-foreground backdrop-blur-sm transition hover:bg-muted hover:-translate-y-[1px] active:scale-[.98]"
               >
-                <Map className="size-4" />
+                <Map className="size-3.5" />
                 Peta Desa
               </Link>
             </motion.div>
 
+            {/* ★★★ DAFTARKAN USAHA — PRIMARY CTA ★★★ */}
+            <motion.div variants={itemVariants} className="space-y-3">
+              <Link
+                href="/daftar"
+                className="
+                  group relative flex w-full items-center justify-between
+                  overflow-hidden rounded-2xl
+                  bg-gradient-to-r from-teal-600 via-emerald-500 to-teal-600
+                  px-5 py-4
+                  shadow-[0_8px_32px_-8px_rgba(13,148,136,0.5)]
+                  transition
+                  hover:-translate-y-[2px]
+                  hover:shadow-[0_14px_40px_-8px_rgba(13,148,136,0.6)]
+                  active:scale-[.99] active:translate-y-0
+                  sm:max-w-sm
+                "
+              >
+                {/* ✨ Shimmer sweep on hover */}
+                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+                <div className="flex items-center gap-3.5">
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                    <Sparkles className="size-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-extrabold text-white leading-tight tracking-tight">
+                      Daftarkan Usaha Anda
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-white/75 font-medium">
+                      Gratis · Mudah · Langsung Tayang
+                    </p>
+                  </div>
+                </div>
+
+                {/* Arrow pill */}
+                <motion.div
+                  whileHover={{ x: 3 }}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/15"
+                >
+                  <ArrowRight className="size-4 text-white" />
+                </motion.div>
+              </Link>
+
+              {/* Trust indicators */}
+              <div className="flex flex-wrap items-center gap-4 pl-1">
+                {[
+                  "✓ Gratis selamanya",
+                  "✓ Tanpa daftar akun",
+                  "✓ Review cepat",
+                ].map((text) => (
+                  <span key={text} className="text-xs text-muted-foreground">
+                    {text}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+
           </motion.div>
 
-          {/* ══ RIGHT — 2 Slot Foto ═══════════════════════════════ */}
-          <div className="hidden flex-col gap-4 lg:flex">
+          {/* ══ RIGHT — Photos ════════════════════════════════════════ */}
+          <div className="relative hidden flex-col gap-4 lg:flex">
             {/*
-              📸 GANTI FOTO:
-              1. Simpan foto ke folder /public/
-              2. Ganti src="/foto-gerbang.jpg" → nama file kamu
-              3. Contoh: src="/gerbang-desa.jpg"
+              📸 CARA GANTI FOTO:
+              1. Simpan file ke folder /public/
+              2. Ganti src di bawah sesuai nama file
+                 Contoh: src="/gerbang-desa.jpg"
             */}
             <FotoDesa
               src="/foto-gerbang.jpg"
@@ -306,13 +387,17 @@ export default function HeroSection() {
               label="Gerbang Masuk Desa Sedayu"
               delay={0.5}
             />
-            <FotoDesa
-              src="/foto-umkm.jpg"
-              alt="UMKM Unggulan Desa Sedayu"
-              label="UMKM Unggulan Desa Sedayu"
-              delay={0.65}
-              className="ml-10" // offset ke kanan untuk depth effect
-            />
+
+            <div className="relative pb-5">
+              <FotoDesa
+                src="/foto-umkm.jpg"
+                alt="UMKM Unggulan Desa Sedayu"
+                label="UMKM Unggulan Desa Sedayu"
+                delay={0.65}
+                className="ml-10"
+              />
+              <FloatingVerifiedBadge />
+            </div>
           </div>
 
         </div>
@@ -335,43 +420,46 @@ export default function HeroSection() {
         </motion.div>
       </div>
 
-      {/* ── Stats strip ─────────────────────────────────────────── */}
+      {/* ── Stats strip — angka animasi ──────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9, ...spring }}
-        className="relative border-t border-border bg-background/70 backdrop-blur-md"
+        transition={{ delay: 0.8, ...spring }}
+        className="relative border-t border-border bg-background/80 backdrop-blur-md"
       >
         <div className="mx-auto max-w-7xl px-6 py-5">
-          <div className="flex flex-wrap items-center gap-6 sm:gap-10">
+          <div className="flex flex-wrap items-center justify-between gap-6">
 
-            {/* Stat items */}
-            {[
-              { icon: Store,  label: "UMKM Aktif",       value: "42+", color: "text-amber-500",  bg: "bg-amber-50  dark:bg-amber-950/40"  },
-              { icon: School, label: "Institusi Sekolah", value: "7",   color: "text-teal-600",   bg: "bg-teal-50   dark:bg-teal-950/40"   },
-              { icon: Map,    label: "Kategori Usaha",    value: "9",   color: "text-blue-500",   bg: "bg-blue-50   dark:bg-blue-950/40"   },
-            ].map(({ icon: Icon, label, value, color, bg }) => (
-              <div key={label} className="flex items-center gap-3">
-                <div className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${bg}`}>
-                  <Icon className={`size-4 ${color}`} />
+            {/* Stats */}
+            <div className="flex flex-wrap items-center gap-8">
+              {[
+                { icon: Store,  label: "UMKM Aktif",       value: umkmCount,     suffix: "+", color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-950/40" },
+                { icon: School, label: "Institusi Sekolah", value: sekolahCount,  suffix: "",  color: "text-teal-600",  bg: "bg-teal-50 dark:bg-teal-950/40"   },
+                { icon: Map,    label: "Kategori Usaha",    value: kategoriCount, suffix: "",  color: "text-blue-500",  bg: "bg-blue-50 dark:bg-blue-950/40"   },
+              ].map(({ icon: Icon, label, value, suffix, color, bg }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <div className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${bg}`}>
+                    <Icon className={`size-4 ${color}`} />
+                  </div>
+                  <div>
+                    <p className="tabular-nums text-sm font-bold text-foreground leading-none">
+                      {value}{suffix}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{label}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground leading-none">{value}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">{label}</p>
-                </div>
-              </div>
-            ))}
-
-            {/* Daftar CTA */}
-            <div className="ml-auto hidden sm:block">
-              <Link
-                href="/daftar"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-bold text-foreground transition hover:bg-muted hover:-translate-y-[1px] active:scale-[.98]"
-              >
-                Daftarkan Usaha Kamu
-                <ArrowRight className="size-3" />
-              </Link>
+              ))}
             </div>
+
+            {/* Mini daftar CTA di strip */}
+            <Link
+              href="/daftar"
+              className="hidden items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2.5 text-xs font-bold text-teal-700 transition hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300 sm:inline-flex"
+            >
+              <Sparkles className="size-3.5" />
+              Daftarkan Usaha
+              <ChevronRight className="size-3.5" />
+            </Link>
 
           </div>
         </div>
