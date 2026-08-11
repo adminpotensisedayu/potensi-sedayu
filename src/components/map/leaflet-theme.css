@@ -1,0 +1,73 @@
+﻿/* === Leaflet theming: match tema editorial Desa Sedayu === */
+.leaflet-container {
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  background: #e9e3d6;
+}
+
+/* Pin: bayangan halus + efek hover */
+.sedayu-pin {
+  filter: drop-shadow(0 3px 4px rgba(31, 27, 22, 0.28));
+  transition: transform 0.15s ease;
+  transform-origin: bottom center;
+}
+.sedayu-pin:hover {
+  transform: scale(1.15);
+  z-index: 1000;
+}
+
+/* Popup: kartu membulat */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  border: 1px solid #ece4d3;
+  box-shadow: 0 12px 32px rgba(31, 27, 22, 0.16);
+  padding: 3px;
+}
+.leaflet-popup-content {
+  margin: 10px 12px;
+  line-height: 1.4;
+}
+.leaflet-popup-tip {
+  box-shadow: 0 12px 32px rgba(31, 27, 22, 0.16);
+}
+.leaflet-container a.leaflet-popup-close-button {
+  top: 8px;
+  right: 8px;
+  color: #9a9080;
+}
+
+/* Tombol zoom */
+.leaflet-bar,
+.leaflet-touch .leaflet-bar {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(31, 27, 22, 0.14);
+}
+.leaflet-bar a,
+.leaflet-touch .leaflet-bar a {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  color: #2b2620;
+  background: #fffdf9;
+  border-bottom: 1px solid #ece4d3;
+  font-size: 18px;
+}
+.leaflet-bar a:hover {
+  background: #f3ecdd;
+}
+.leaflet-bar a:last-child {
+  border-bottom: none;
+}
+
+/* Atribusi: kalem */
+.leaflet-control-attribution {
+  background: rgba(255, 253, 249, 0.82) !important;
+  color: #8a8172;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 8px 0 0 0;
+}
+.leaflet-control-attribution a {
+  color: #6f6656;
+}
