@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import Image from "next/image"
@@ -10,6 +10,8 @@ import {
   Store,
   School,
   ClipboardList,
+  Users,
+  Settings,
   LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -20,10 +22,12 @@ export interface AdminSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { href: "/admin",           label: "Dashboard",      icon: LayoutDashboard, exact: true  },
-  { href: "/admin/umkm",      label: "UMKM",           icon: Store,           exact: false },
-  { href: "/admin/sekolah",   label: "Sekolah",        icon: School,          exact: false },
-  { href: "/admin/pengajuan", label: "Pengajuan UMKM", icon: ClipboardList,   exact: false },
+  { href: "/admin",            label: "Dashboard",      icon: LayoutDashboard, exact: true  },
+  { href: "/admin/umkm",       label: "UMKM",           icon: Store,           exact: false },
+  { href: "/admin/sekolah",    label: "Sekolah",        icon: School,          exact: false },
+  { href: "/admin/pengajuan",  label: "Pengajuan UMKM", icon: ClipboardList,   exact: false },
+  { href: "/admin/kkn",        label: "Tim KKN",        icon: Users,           exact: false },
+  { href: "/admin/pengaturan", label: "Pengaturan",     icon: Settings,        exact: false },
 ]
 
 export function AdminSidebar({ email }: AdminSidebarProps) {
@@ -31,7 +35,6 @@ export function AdminSidebar({ email }: AdminSidebarProps) {
   const router   = useRouter()
   const supabase = createClient()
 
-  // Badge: jumlah pengajuan yang menunggu review
   const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => {
@@ -51,27 +54,16 @@ export function AdminSidebar({ email }: AdminSidebarProps) {
 
   return (
     <aside className="flex h-full w-60 flex-col border-r border-border bg-card">
-      {/* ── Brand ── */}
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-border px-5">
-        <Image
-          src="/logo.png"
-          alt="Logo Desa"
-          width={28}
-          height={28}
-          className="rounded-md"
-        />
+        <Image src="/logo.png" alt="Logo Desa" width={28} height={28} className="rounded-md" />
         <span className="font-serif text-[15px] font-bold leading-tight text-foreground">
           Potensi Sedayu
         </span>
       </div>
 
-      {/* ── Navigation ── */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3">
         {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
-          const active = exact
-            ? pathname === href
-            : pathname.startsWith(href)
-
+          const active      = exact ? pathname === href : pathname.startsWith(href)
           const isPengajuan = href === "/admin/pengajuan"
 
           return (
@@ -87,13 +79,8 @@ export function AdminSidebar({ email }: AdminSidebarProps) {
             >
               <Icon className="size-4 shrink-0" />
               <span className="flex-1">{label}</span>
-
-              {/* Badge pending count khusus menu Pengajuan */}
               {isPengajuan && pendingCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="h-5 min-w-[1.25rem] px-1.5 text-[10px]"
-                >
+                <Badge variant="destructive" className="h-5 min-w-[1.25rem] px-1.5 text-[10px]">
                   {pendingCount}
                 </Badge>
               )}
@@ -102,7 +89,6 @@ export function AdminSidebar({ email }: AdminSidebarProps) {
         })}
       </nav>
 
-      {/* ── Footer / User ── */}
       <div className="shrink-0 border-t border-border p-3">
         <div className="mb-1.5 rounded-lg bg-muted/50 px-3 py-2">
           <p className="truncate text-[11px] text-muted-foreground">Login sebagai</p>

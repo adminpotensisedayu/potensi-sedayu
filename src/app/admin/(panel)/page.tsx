@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { Store, School, Users, MapPin, Settings, ArrowRight } from "lucide-react"
 
@@ -15,7 +15,6 @@ async function hitung(
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
 
-  // ✅ hanya query tabel yang masih ada
   const [umkm, sekolah, kegiatan] = await Promise.all([
     hitung(supabase, "umkm"),
     hitung(supabase, "sekolah"),
@@ -23,17 +22,17 @@ export default async function AdminDashboardPage() {
   ])
 
   const stats = [
-    { label: "UMKM",        value: umkm,     icon: Store,  href: "/admin/umkm"    },
-    { label: "Sekolah",     value: sekolah,  icon: School, href: "/admin/sekolah" },
-    { label: "Kegiatan KKN",value: kegiatan, icon: Users,  href: "/admin/kkn"     },
+    { label: "UMKM",         value: umkm,     icon: Store,  href: "/admin/umkm"    },
+    { label: "Sekolah",      value: sekolah,  icon: School, href: "/admin/sekolah" },
+    { label: "Kegiatan KKN", value: kegiatan, icon: Users,  href: "/admin/kkn"     },
   ]
 
   const pintasan = [
-    { label: "Kelola UMKM",    desc: "Tambah, ubah, hapus data UMKM.",    icon: Store,    href: "/admin/umkm"        },
-    { label: "Kelola Sekolah", desc: "Data sekolah di Desa Sedayu.",      icon: School,   href: "/admin/sekolah"     },
-    { label: "Kelola Tim KKN", desc: "Anggota dan kegiatan.",             icon: Users,    href: "/admin/kkn"         },
-    { label: "Pengaturan",     desc: "Profil desa, kontak, link form.",   icon: Settings, href: "/admin/pengaturan"  },
-    { label: "Lihat Peta",     desc: "Sebaran titik di peta.",            icon: MapPin,   href: "/peta"              },
+    { label: "Kelola UMKM",    desc: "Tambah, ubah, hapus data UMKM.",    icon: Store,    href: "/admin/umkm"       },
+    { label: "Kelola Sekolah", desc: "Data sekolah di Desa Sedayu.",      icon: School,   href: "/admin/sekolah"    },
+    { label: "Kelola Tim KKN", desc: "Anggota dan kegiatan.",             icon: Users,    href: "/admin/kkn"        },
+    { label: "Pengaturan",     desc: "Profil desa, kontak, dan lainnya.", icon: Settings, href: "/admin/pengaturan" },
+    { label: "Lihat Peta",     desc: "Sebaran titik di peta.",            icon: MapPin,   href: "/peta"             },
   ]
 
   return (
