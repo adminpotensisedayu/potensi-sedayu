@@ -3,9 +3,9 @@ import Link from "next/link"
 export default function NotFound() {
   return (
     <main className="flex min-h-[70vh] flex-col items-center justify-center gap-6 px-4 text-center">
-      <p className="font-display text-8xl font-bold text-primary/20">404</p>
-      <h1 className="font-display text-2xl text-ink">Halaman tidak ditemukan</h1>
-      <p className="max-w-sm text-clay">
+      <p className="font-serif text-8xl font-bold text-primary/20">404</p>
+      <h1 className="font-serif text-2xl text-foreground">Halaman tidak ditemukan</h1>
+      <p className="max-w-sm text-muted-foreground">
         Halaman yang kamu cari tidak ada atau sudah dipindahkan.
       </p>
       <Link
