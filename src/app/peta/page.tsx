@@ -1,25 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
-import dynamic from "next/dynamic"
+import PetaWrapper from "@/components/map/peta-wrapper"
+import type { MapPoint } from "@/components/map/peta-explorer"
 
 export const revalidate = 300
-
-const PetaExplorer = dynamic(
-  () => import("@/components/map/peta-explorer"),
-  { ssr: false }
-)
-
-export type MapPoint = {
-  id: string
-  lat: number
-  lng: number
-  sector: "umkm" | "sekolah"
-  label: string
-  alamat?: string
-  subLabel?: string
-  subKat?: string
-  href: string
-  foto?: string
-}
 
 export default async function PetaPage() {
   const supabase = await createClient()
@@ -68,7 +51,7 @@ export default async function PetaPage() {
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100dvh - 64px)" }}>
-      <PetaExplorer points={points} />
+      <PetaWrapper points={points} />
     </div>
   )
 }
