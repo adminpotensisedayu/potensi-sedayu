@@ -84,7 +84,7 @@ export default async function SekolahPage({
       </div>
 
       {/* Filter */}
-      <SekolahFilter />
+      <SekolahFilter currentQ={q} currentJenjang={jenjang} />
 
       {/* Grid */}
       {(rows ?? []).length === 0 ? (
