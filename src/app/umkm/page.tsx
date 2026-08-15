@@ -90,7 +90,7 @@ export default async function UmkmPage({
       </div>
 
       {/* Filter */}
-      <UmkmFilter kategoriList={(kategoriList ?? []) as any[]} />
+      <UmkmFilter kategoriList={(kategoriList ?? []) as any[]} currentQ={q} currentKat={kat} currentSub={sub} />
 
       {/* Grid */}
       {(rows ?? []).length === 0 ? (
