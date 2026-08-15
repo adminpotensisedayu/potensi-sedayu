@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { DeleteButton } from "@/components/admin/delete-button"
-import { Plus, Pencil, Users, CalendarDays } from "lucide-react"
+import { Plus, Pencil, Users, CalendarDays, ImageOff } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -138,6 +138,7 @@ export default async function AdminKknPage() {
             <table className="w-full text-sm">
               <thead className="border-b border-border bg-secondary/40 text-left text-muted-foreground">
                 <tr>
+                  <th className="px-4 py-3 font-medium">Foto</th>
                   <th className="px-4 py-3 font-medium">Tanggal</th>
                   <th className="px-4 py-3 font-medium">Judul Kegiatan</th>
                   <th className="px-4 py-3 font-medium">Deskripsi</th>
@@ -147,7 +148,23 @@ export default async function AdminKknPage() {
               <tbody>
                 {kegiatan.map((k) => (
                   <tr key={k.id} className="border-b border-border last:border-0">
-                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{tanggalID(k.tanggal)}</td>
+                    <td className="px-4 py-3">
+                      {k.foto_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={k.foto_url}
+                          alt={k.judul}
+                          className="size-12 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
+                          <ImageOff className="size-5 text-muted-foreground" strokeWidth={1.5} />
+                        </div>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                      {tanggalID(k.tanggal)}
+                    </td>
                     <td className="px-4 py-3 font-medium text-foreground">{k.judul}</td>
                     <td className="max-w-xs px-4 py-3 text-muted-foreground">
                       <span className="line-clamp-2">{k.deskripsi ?? "-"}</span>
@@ -161,7 +178,11 @@ export default async function AdminKknPage() {
                           <Pencil className="size-4" strokeWidth={1.5} />
                           Edit
                         </Link>
-                        <DeleteButton table="kegiatan_kkn" id={k.id} label={`Hapus kegiatan "${k.judul}"?`} />
+                        <DeleteButton
+                          table="kegiatan_kkn"
+                          id={k.id}
+                          label={`Hapus kegiatan "${k.judul}"?`}
+                        />
                       </div>
                     </td>
                   </tr>

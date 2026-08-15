@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { ImageUpload } from "@/components/admin/image-upload"
 import { Loader2, Save } from "lucide-react"
 
 type KegiatanRow = { [key: string]: any }
@@ -19,6 +20,7 @@ export function KknKegiatanForm({ initial }: { initial: KegiatanRow | null }) {
     initial?.tanggal ? String(initial.tanggal).slice(0, 10) : ""
   )
   const [deskripsi, setDeskripsi] = useState<string>(initial?.deskripsi ?? "")
+  const [fotoUrl,   setFotoUrl]   = useState<string | null>(initial?.foto_url ?? null)
   const [saving,    setSaving]    = useState(false)
   const [error,     setError]     = useState("")
 
@@ -31,6 +33,7 @@ export function KknKegiatanForm({ initial }: { initial: KegiatanRow | null }) {
       judul:     judul.trim(),
       tanggal:   tanggal || null,
       deskripsi: deskripsi.trim() || null,
+      foto_url:  fotoUrl,
     }
 
     const supabase = createClient()
@@ -84,6 +87,18 @@ export function KknKegiatanForm({ initial }: { initial: KegiatanRow | null }) {
             value={deskripsi}
             onChange={(e) => setDeskripsi(e.target.value)}
             placeholder="Ceritakan kegiatan ini secara singkat..."
+          />
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-medium text-foreground">
+            Foto Kegiatan <span className="text-[11px] font-normal text-muted-foreground">(opsional)</span>
+          </p>
+          <ImageUpload
+            bucket="foto-kegiatan-kkn"
+            value={fotoUrl}
+            onChange={setFotoUrl}
+            label="Upload foto"
           />
         </div>
       </div>
