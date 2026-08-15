@@ -1,4 +1,4 @@
-﻿import { Suspense } from "react"
+import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { UmkmCard } from "@/components/cards/UmkmCard"
 import { UmkmFilter } from "@/components/umkm/umkm-filter"
@@ -9,12 +9,11 @@ export const metadata = { title: "UMKM", description: "Daftar UMKM aktif Desa Se
 export default async function UmkmPage({
   searchParams,
 }: {
-  searchParams: Promise<{ kat?: string; sub?: string }>
+  searchParams: Promise<{ kat?: string; sub?: string; q?: string }>
 }) {
-  const { kat, sub } = await searchParams
+  const { kat, sub, q } = await searchParams
   const supabase = await createClient()
 
-  // Build query — filter sub dulu, lalu kat, lalu semua
   let query = supabase
     .from("umkm")
     .select(
@@ -27,6 +26,11 @@ export default async function UmkmPage({
 
   if (sub)      query = query.eq("sub_kategori_id", sub)
   else if (kat) query = query.eq("kategori_id", kat)
+
+  if (q?.trim()) {
+    const term = q.trim()
+    query = query.or(`nama_usaha.ilike.%${term}%,deskripsi.ilike.%${term}%`)
+  }
 
   const [{ data: umkm }, { data: kategoriList }] = await Promise.all([
     query,
@@ -45,20 +49,23 @@ export default async function UmkmPage({
         </p>
       </header>
 
-      {/* Filter 2-level */}
       <div className="mb-8">
         <Suspense fallback={<div className="h-9" />}>
           <UmkmFilter
             kategoriList={(kategoriList ?? []) as any[]}
             currentKat={kat ?? ""}
             currentSub={sub ?? ""}
+            currentQ={q ?? ""}
           />
         </Suspense>
       </div>
 
       {rows.length > 0 ? (
         <>
-          <p className="mb-6 text-sm text-muted-foreground">{rows.length} usaha ditemukan</p>
+          <p className="mb-6 text-sm text-muted-foreground">
+            {rows.length} usaha ditemukan
+            {q?.trim() ? ` untuk "${q.trim()}"` : ""}
+          </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {rows.map((u) => (
               <UmkmCard key={u.id} u={u as any} />
@@ -66,8 +73,16 @@ export default async function UmkmPage({
           </div>
         </>
       ) : (
-        <div className="rounded-2xl border border-dashed border-border py-20 text-center text-muted-foreground">
-          {kat || sub ? "Tidak ada UMKM untuk filter ini." : "Belum ada data UMKM."}
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-20 text-center text-muted-foreground">
+          <svg className="size-10 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+          </svg>
+          <p className="font-medium">
+            {kat || sub || q ? "Tidak ada UMKM yang cocok." : "Belum ada data UMKM."}
+          </p>
+          {(kat || sub || q) && (
+            <p className="text-sm">Coba ubah kata kunci atau hapus filter.</p>
+          )}
         </div>
       )}
     </section>

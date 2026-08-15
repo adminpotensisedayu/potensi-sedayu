@@ -9,7 +9,6 @@ import {
   MapPin, Sparkles, CheckCircle2, ChevronRight,
 } from "lucide-react"
 
-// ─── Typewriter ──────────────────────────────────────────────────────────────
 const PHRASES = [
   "UMKM Lokal yang Berkembang",
   "Pendidikan Berkualitas",
@@ -17,12 +16,7 @@ const PHRASES = [
   "Potensi Nyata Warga Desa",
 ]
 
-function useTypewriter(
-  phrases: string[],
-  typeSpeed = 55,
-  deleteSpeed = 28,
-  pauseMs = 2200
-) {
+function useTypewriter(phrases: string[], typeSpeed = 55, deleteSpeed = 28, pauseMs = 2200) {
   const [display, setDisplay]     = useState("")
   const [phraseIdx, setPhraseIdx] = useState(0)
   const [charIdx, setCharIdx]     = useState(0)
@@ -37,10 +31,7 @@ function useTypewriter(
   useEffect(() => {
     const word = phrases[phraseIdx]
     if (!deleting && charIdx < word.length) {
-      const id = setTimeout(() => {
-        setDisplay(word.slice(0, charIdx + 1))
-        setCharIdx((c) => c + 1)
-      }, typeSpeed)
+      const id = setTimeout(() => { setDisplay(word.slice(0, charIdx + 1)); setCharIdx((c) => c + 1) }, typeSpeed)
       return () => clearTimeout(id)
     }
     if (!deleting && charIdx === word.length) {
@@ -48,10 +39,7 @@ function useTypewriter(
       return () => clearTimeout(id)
     }
     if (deleting && charIdx > 0) {
-      const id = setTimeout(() => {
-        setDisplay(word.slice(0, charIdx - 1))
-        setCharIdx((c) => c - 1)
-      }, deleteSpeed)
+      const id = setTimeout(() => { setDisplay(word.slice(0, charIdx - 1)); setCharIdx((c) => c - 1) }, deleteSpeed)
       return () => clearTimeout(id)
     }
     if (deleting && charIdx === 0) {
@@ -63,27 +51,6 @@ function useTypewriter(
   return { display, cursor }
 }
 
-// ─── Animated counter ────────────────────────────────────────────────────────
-function useCounter(target: number, duration = 1400, delay = 0) {
-  const [count, setCount] = useState(0)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const start = Date.now()
-      const id = setInterval(() => {
-        const elapsed  = Date.now() - start
-        const progress = Math.min(elapsed / duration, 1)
-        const eased    = 1 - Math.pow(2, -10 * progress)
-        setCount(Math.round(eased * target))
-        if (progress >= 1) clearInterval(id)
-      }, 16)
-      return () => clearInterval(id)
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [target, duration, delay])
-  return count
-}
-
-// ─── Spring ──────────────────────────────────────────────────────────────────
 const spring = { type: "spring", stiffness: 100, damping: 20 } as const
 const containerVariants = {
   hidden: {},
@@ -94,7 +61,6 @@ const itemVariants = {
   show:  { opacity: 1, y: 0, transition: spring },
 }
 
-// ─── Pulse dot ───────────────────────────────────────────────────────────────
 function PulseDot() {
   return (
     <span className="relative flex size-2 shrink-0">
@@ -104,49 +70,55 @@ function PulseDot() {
   )
 }
 
-// ─── Photo slot (reusable) ───────────────────────────────────────────────────
+// Foto card dengan floating animation
 function FotoDesa({
-  src, alt, label, delay = 0, className = "",
+  src, alt, label, floatDuration = 4, floatDelay = 0, delay = 0, className = "",
 }: {
-  src: string; alt: string; label: string; delay?: number; className?: string
+  src: string; alt: string; label: string
+  floatDuration?: number; floatDelay?: number; delay?: number; className?: string
 }) {
   const [err, setErr] = useState(false)
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.97 }}
+      initial={{ opacity: 0, y: 24, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay, ...spring }}
       className={`group relative overflow-hidden rounded-2xl border border-border shadow-[0_12px_40px_-10px_rgba(0,0,0,0.15)] ${className}`}
     >
-      {err ? (
-        <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 bg-muted p-5 text-center">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-muted-foreground/10">
-            <Camera className="size-5 text-muted-foreground/30" />
+      <motion.div
+        animate={{ y: [0, -10, 0] }}
+        transition={{ duration: floatDuration, repeat: Infinity, ease: "easeInOut", delay: floatDelay }}
+        className="h-full w-full"
+      >
+        {err ? (
+          <div className="flex min-h-[180px] flex-col items-center justify-center gap-2 bg-muted p-5 text-center">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-muted-foreground/10">
+              <Camera className="size-5 text-muted-foreground/30" />
+            </div>
+            <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
+            <p className="text-[10px] text-muted-foreground/50">Upload foto ke /public/</p>
           </div>
-          <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
-          <p className="text-[10px] text-muted-foreground/50">Upload foto ke /public/</p>
-        </div>
-      ) : (
-        <div className="relative aspect-[16/10]">
-          <Image
-            src={src} alt={alt} fill
-            sizes="(max-width: 1024px) 80vw, 45vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-            onError={() => setErr(true)}
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 flex items-center gap-1.5 px-3 py-2.5">
-            <MapPin className="size-3 shrink-0 text-white/80" />
-            <p className="text-xs font-bold text-white drop-shadow">{label}</p>
+        ) : (
+          <div className="relative aspect-[16/10]">
+            <Image
+              src={src} alt={alt} fill
+              sizes="(max-width: 768px) 90vw, (max-width: 1024px) 50vw, 45vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+              onError={() => setErr(true)}
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-1.5 px-3 py-2.5">
+              <MapPin className="size-3 shrink-0 text-white/80" />
+              <p className="text-xs font-bold text-white drop-shadow">{label}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </motion.div>
     </motion.div>
   )
 }
 
-// ─── Floating badge ──────────────────────────────────────────────────────────
 function FloatingVerifiedBadge() {
   return (
     <motion.div
@@ -172,17 +144,13 @@ function FloatingVerifiedBadge() {
   )
 }
 
-// ─── MAIN ────────────────────────────────────────────────────────────────────
 export default function HeroSection() {
   const { display, cursor } = useTypewriter(PHRASES)
-  const umkmCount     = useCounter(42, 1400, 800)
-  const sekolahCount  = useCounter(7,  1200, 900)
-  const kategoriCount = useCounter(9,  1300, 1000)
 
   return (
     <section className="relative flex min-h-[100dvh] flex-col overflow-hidden">
 
-      {/* ── Backgrounds ───────────────────────────────────────────── */}
+      {/* Backgrounds */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background via-background to-muted/50" />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
@@ -196,13 +164,12 @@ export default function HeroSection() {
       />
       <div className="pointer-events-none absolute -right-32 -top-32 size-[600px] rounded-full bg-teal-500/8 blur-[120px]" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 size-[480px] rounded-full bg-amber-500/7 blur-[100px]" />
-      <div className="pointer-events-none absolute bottom-1/3 right-1/3 size-[280px] rounded-full bg-emerald-500/5 blur-[70px]" />
 
-      {/* ── Main content ──────────────────────────────────────────── */}
+      {/* Main content */}
       <div className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-6 py-16 lg:py-20">
-        <div className="grid gap-14 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:gap-14">
+        <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:gap-14">
 
-          {/* ══ LEFT ══════════════════════════════════════════════ */}
+          {/* LEFT */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -228,7 +195,7 @@ export default function HeroSection() {
               </span>
             </motion.div>
 
-            {/* Headline + typewriter */}
+            {/* Headline */}
             <motion.div variants={itemVariants} className="space-y-3">
               <h1 className="font-serif text-4xl font-semibold leading-[1.07] tracking-tight text-foreground sm:text-5xl lg:text-[3.9rem] xl:text-[4.4rem]">
                 Potensi Ekonomi
@@ -246,8 +213,6 @@ export default function HeroSection() {
                   />
                 </span>
               </h1>
-
-              {/* Typewriter */}
               <div className="flex h-8 items-center">
                 <p className="text-sm text-muted-foreground sm:text-base">
                   Temukan{" "}
@@ -262,7 +227,6 @@ export default function HeroSection() {
               </div>
             </motion.div>
 
-            {/* Description */}
             <motion.p
               variants={itemVariants}
               className="max-w-[46ch] text-sm leading-relaxed text-muted-foreground"
@@ -271,29 +235,29 @@ export default function HeroSection() {
               Temukan, jelajahi, dan kenali potensi nyata warga desa.
             </motion.p>
 
-            {/* ✅ FOTO MOBILE — horizontal scroll, hanya di mobile */}
+            {/* ✅ Foto — Tablet & Mobile: grid 2 kolom */}
             <motion.div variants={itemVariants} className="lg:hidden">
-              <div className="-mx-6 flex gap-3 overflow-x-auto px-6 pb-1">
-                <div className="w-[78vw] shrink-0 sm:w-[60vw]">
-                  <FotoDesa
-                    src="/foto-gerbang.jpg"
-                    alt="Gerbang Desa Sedayu"
-                    label="Gerbang Masuk Desa Sedayu"
-                    delay={0.4}
-                  />
-                </div>
-                <div className="w-[78vw] shrink-0 sm:w-[60vw]">
-                  <FotoDesa
-                    src="/foto-umkm.jpg"
-                    alt="UMKM Desa Sedayu"
-                    label="UMKM Unggulan Desa"
-                    delay={0.5}
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <FotoDesa
+                  src="/foto-gerbang.jpg"
+                  alt="Gerbang Desa Sedayu"
+                  label="Gerbang Masuk Desa Sedayu"
+                  delay={0.4}
+                  floatDuration={4.5}
+                  floatDelay={0}
+                />
+                <FotoDesa
+                  src="/foto-umkm.jpg"
+                  alt="UMKM Desa Sedayu"
+                  label="UMKM Unggulan Desa"
+                  delay={0.5}
+                  floatDuration={5}
+                  floatDelay={0.8}
+                />
               </div>
             </motion.div>
 
-            {/* Secondary CTAs */}
+            {/* CTAs */}
             <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2.5">
               <Link href="/umkm" className="inline-flex items-center gap-2 rounded-xl border border-border bg-background/80 px-4 py-2.5 text-sm font-semibold text-foreground backdrop-blur-sm transition hover:bg-muted hover:-translate-y-[1px] active:scale-[.98]">
                 <Store className="size-3.5" /> Direktori UMKM
@@ -306,49 +270,43 @@ export default function HeroSection() {
               </Link>
             </motion.div>
 
-            {/* ★ DAFTARKAN USAHA — PRIMARY CTA ★ */}
+            {/* Primary CTA */}
             <motion.div variants={itemVariants} className="space-y-3">
               <Link
                 href="/daftar"
                 className="group relative flex w-full items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-r from-teal-600 via-emerald-500 to-teal-600 px-5 py-4 shadow-[0_8px_32px_-8px_rgba(13,148,136,0.5)] transition hover:-translate-y-[2px] hover:shadow-[0_14px_40px_-8px_rgba(13,148,136,0.6)] active:scale-[.99] active:translate-y-0 sm:max-w-sm"
               >
-                {/* Shimmer */}
                 <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <div className="flex items-center gap-3.5">
                   <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
                     <Sparkles className="size-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-extrabold text-white leading-tight tracking-tight">
-                      Daftarkan Usaha Anda
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-white/75 font-medium">
-                      Gratis · Mudah · Langsung Tayang
-                    </p>
+                    <p className="text-sm font-extrabold text-white leading-tight tracking-tight">Daftarkan Usaha Anda</p>
+                    <p className="mt-0.5 text-[11px] text-white/75 font-medium">Gratis · Mudah · Langsung Tayang</p>
                   </div>
                 </div>
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/15 transition-transform group-hover:translate-x-1">
                   <ArrowRight className="size-4 text-white" />
                 </div>
               </Link>
-
-              {/* Trust indicators */}
               <div className="flex flex-wrap items-center gap-4 pl-1">
                 {["✓ Gratis selamanya", "✓ Tanpa daftar akun", "✓ Review cepat"].map((t) => (
                   <span key={t} className="text-xs text-muted-foreground">{t}</span>
                 ))}
               </div>
             </motion.div>
-
           </motion.div>
 
-          {/* ══ RIGHT — Desktop only ═══════════════════════════════ */}
+          {/* RIGHT — Desktop only dengan floating animation */}
           <div className="relative hidden flex-col gap-4 lg:flex">
             <FotoDesa
               src="/foto-gerbang.jpg"
               alt="Gerbang Masuk Desa Sedayu"
               label="Gerbang Masuk Desa Sedayu"
               delay={0.5}
+              floatDuration={4.5}
+              floatDelay={0}
             />
             <div className="relative pb-5">
               <FotoDesa
@@ -356,6 +314,8 @@ export default function HeroSection() {
                 alt="UMKM Unggulan Desa Sedayu"
                 label="UMKM Unggulan Desa Sedayu"
                 delay={0.65}
+                floatDuration={5.2}
+                floatDelay={1.2}
                 className="ml-10"
               />
               <FloatingVerifiedBadge />
@@ -382,7 +342,7 @@ export default function HeroSection() {
         </motion.div>
       </div>
 
-      {/* ── Stats strip ───────────────────────────────────────────── */}
+      {/* Stats strip */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -393,22 +353,21 @@ export default function HeroSection() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-6">
               {[
-                { icon: Store,  label: "UMKM Aktif",       value: umkmCount,     suffix: "+", color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-950/40" },
-                { icon: School, label: "Institusi Sekolah", value: sekolahCount,  suffix: "",  color: "text-teal-600",  bg: "bg-teal-50 dark:bg-teal-950/40"   },
-                { icon: Map,    label: "Kategori Usaha",    value: kategoriCount, suffix: "",  color: "text-blue-500",  bg: "bg-blue-50 dark:bg-blue-950/40"   },
-              ].map(({ icon: Icon, label, value, suffix, color, bg }) => (
+                { icon: Store,  label: "UMKM Aktif",       suffix: "+", color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-950/40" },
+                { icon: School, label: "Institusi Sekolah", suffix: "",  color: "text-teal-600",  bg: "bg-teal-50 dark:bg-teal-950/40"   },
+                { icon: Map,    label: "Kategori Usaha",    suffix: "",  color: "text-blue-500",  bg: "bg-blue-50 dark:bg-blue-950/40"   },
+              ].map(({ icon: Icon, label, suffix, color, bg }) => (
                 <div key={label} className="flex items-center gap-2.5">
                   <div className={`flex size-8 shrink-0 items-center justify-center rounded-xl ${bg}`}>
                     <Icon className={`size-3.5 ${color}`} />
                   </div>
                   <div>
-                    <p className="tabular-nums text-sm font-bold text-foreground leading-none">{value}{suffix}</p>
+                    <p className="tabular-nums text-sm font-bold text-foreground leading-none">—{suffix}</p>
                     <p className="mt-0.5 text-[10px] text-muted-foreground">{label}</p>
                   </div>
                 </div>
               ))}
             </div>
-
             <Link
               href="/daftar"
               className="inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2.5 text-xs font-bold text-teal-700 transition hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300"
@@ -420,7 +379,6 @@ export default function HeroSection() {
           </div>
         </div>
       </motion.div>
-
     </section>
   )
 }

@@ -1,6 +1,6 @@
-import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { SekolahCard } from "@/components/cards/SekolahCard"
+import { SekolahFilter } from "@/components/sekolah/sekolah-filter"
 
 export const dynamic = "force-dynamic"
 export const metadata = { title: "Sekolah", description: "Daftar sekolah di Desa Sedayu." }
@@ -10,9 +10,9 @@ const JENJANG_LIST = ["TK", "SD", "SMP", "SMA", "SMK"]
 export default async function SekolahPage({
   searchParams,
 }: {
-  searchParams: Promise<{ jenjang?: string }>
+  searchParams: Promise<{ jenjang?: string; q?: string }>
 }) {
-  const { jenjang } = await searchParams
+  const { jenjang, q } = await searchParams
   const activeJenjang = JENJANG_LIST.includes(jenjang ?? "") ? jenjang : undefined
 
   const supabase = await createClient()
@@ -25,14 +25,13 @@ export default async function SekolahPage({
 
   if (activeJenjang) query = query.eq("jenjang", activeJenjang)
 
+  if (q?.trim()) {
+    const term = q.trim()
+    query = query.or(`nama.ilike.%${term}%,alamat.ilike.%${term}%`)
+  }
+
   const { data } = await query
   const rows = (data ?? []) as any[]
-
-  const tabCls = (active: boolean) =>
-    "rounded-full px-4 py-1.5 text-sm font-medium transition " +
-    (active
-      ? "bg-[#0D9488] text-white"
-      : "border border-border bg-card text-muted-foreground hover:text-foreground")
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-16">
@@ -44,26 +43,31 @@ export default async function SekolahPage({
         </p>
       </header>
 
-      {/* Filter tabs — no JS needed */}
-      <div className="mb-8 flex flex-wrap gap-2">
-        <Link href="/sekolah" className={tabCls(!activeJenjang)}>Semua</Link>
-        {JENJANG_LIST.map((j) => (
-          <Link key={j} href={`/sekolah?jenjang=${j}`} className={tabCls(activeJenjang === j)}>
-            {j}
-          </Link>
-        ))}
+      <div className="mb-8">
+        <SekolahFilter currentJenjang={activeJenjang ?? ""} currentQ={q ?? ""} />
       </div>
 
       {rows.length > 0 ? (
         <>
-          <p className="mb-6 text-sm text-muted-foreground">{rows.length} sekolah ditemukan</p>
+          <p className="mb-6 text-sm text-muted-foreground">
+            {rows.length} sekolah ditemukan
+            {q?.trim() ? ` untuk "${q.trim()}"` : ""}
+          </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {rows.map((s) => <SekolahCard key={s.id} s={s as any} />)}
           </div>
         </>
       ) : (
-        <div className="rounded-2xl border border-dashed border-border py-20 text-center text-muted-foreground">
-          {activeJenjang ? `Belum ada data sekolah jenjang ${activeJenjang}.` : "Belum ada data sekolah."}
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-20 text-center text-muted-foreground">
+          <svg className="size-10 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+          </svg>
+          <p className="font-medium">
+            {activeJenjang || q ? "Tidak ada sekolah yang cocok." : "Belum ada data sekolah."}
+          </p>
+          {(activeJenjang || q) && (
+            <p className="text-sm">Coba ubah kata kunci atau hapus filter.</p>
+          )}
         </div>
       )}
     </section>
