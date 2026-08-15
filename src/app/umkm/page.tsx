@@ -17,7 +17,7 @@ export default async function UmkmPage({
   let query = supabase
     .from("umkm")
     .select(
-      "id, nama_usaha, deskripsi, foto_url, is_unggulan, " +
+      "id, nama_usaha, deskripsi, foto_url, is_unggulan, alamat, " +
       "kategori:kategori_id(nama), sub_kategori:sub_kategori_id(nama)"
     )
     .eq("is_aktif", true)
@@ -27,9 +27,12 @@ export default async function UmkmPage({
   if (sub)      query = query.eq("sub_kategori_id", sub)
   else if (kat) query = query.eq("kategori_id", kat)
 
+  // ✅ Search: nama_usaha, deskripsi, DAN alamat
   if (q?.trim()) {
     const term = q.trim()
-    query = query.or(`nama_usaha.ilike.%${term}%,deskripsi.ilike.%${term}%`)
+    query = query.or(
+      `nama_usaha.ilike.%${term}%,deskripsi.ilike.%${term}%,alamat.ilike.%${term}%`
+    )
   }
 
   const [{ data: umkm }, { data: kategoriList }] = await Promise.all([
@@ -63,13 +66,10 @@ export default async function UmkmPage({
       {rows.length > 0 ? (
         <>
           <p className="mb-6 text-sm text-muted-foreground">
-            {rows.length} usaha ditemukan
-            {q?.trim() ? ` untuk "${q.trim()}"` : ""}
+            {rows.length} usaha ditemukan{q?.trim() ? ` untuk "${q.trim()}"` : ""}
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {rows.map((u) => (
-              <UmkmCard key={u.id} u={u as any} />
-            ))}
+            {rows.map((u) => <UmkmCard key={u.id} u={u as any} />)}
           </div>
         </>
       ) : (
@@ -77,12 +77,8 @@ export default async function UmkmPage({
           <svg className="size-10 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
           </svg>
-          <p className="font-medium">
-            {kat || sub || q ? "Tidak ada UMKM yang cocok." : "Belum ada data UMKM."}
-          </p>
-          {(kat || sub || q) && (
-            <p className="text-sm">Coba ubah kata kunci atau hapus filter.</p>
-          )}
+          <p className="font-medium">{kat || sub || q ? "Tidak ada UMKM yang cocok." : "Belum ada data UMKM."}</p>
+          {(kat || sub || q) && <p className="text-sm">Coba ubah kata kunci atau hapus filter.</p>}
         </div>
       )}
     </section>
