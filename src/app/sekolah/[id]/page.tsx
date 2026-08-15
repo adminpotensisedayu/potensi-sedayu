@@ -5,7 +5,7 @@ import Link from "next/link"
 import {
   ArrowLeft, MapPin, Phone, Globe,
   BookOpen, User, Calendar, Hash,
-  Award, ExternalLink, School, ChevronRight, Star,
+  Award, ExternalLink, School, ChevronRight, Star, Navigation,
 } from "lucide-react"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -23,28 +23,20 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: sekolah }, { data: related }] = await Promise.all([
-    supabase
-      .from("sekolah")
-      .select("*")
-      .eq("id", id)
-      .eq("is_aktif", true)
-      .single(),
-    supabase
-      .from("sekolah")
-      .select("id, nama, jenjang, akreditasi, foto_url")
-      .eq("is_aktif", true)
-      .neq("id", id)
-      .limit(4),
-  ])
+  const { data: sekolah } = await supabase
+    .from("sekolah")
+    .select("*")
+    .eq("id", id)
+    .eq("is_aktif", true)
+    .single()
 
   if (!sekolah) notFound()
 
   const s = sekolah as any
 
-  // URLs — built with string concatenation, no template-literal placeholders
-  const mapsUrl = (s.latitude && s.longitude)
-    ? "https://www.google.com/maps?q=" + s.latitude + "," + s.longitude
+  // ✅ Rute Google Maps (bukan sekedar lokasi)
+  const routeUrl = (s.latitude && s.longitude)
+    ? "https://www.google.com/maps/dir/?api=1&destination=" + s.latitude + "," + s.longitude
     : null
 
   const websiteUrl = s.website
@@ -62,13 +54,13 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
   const jColor = jenjangColor[s.jenjang ?? ""] ?? "bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-400"
 
   const infoItems = [
-    s.alamat         && { icon: MapPin,   label: "Alamat",         value: s.alamat,                color: "text-teal-500",   bg: "bg-teal-50 dark:bg-teal-950/40"      },
-    s.kepala_sekolah && { icon: User,     label: "Kepala Sekolah", value: s.kepala_sekolah,         color: "text-blue-500",   bg: "bg-blue-50 dark:bg-blue-950/40"      },
-    s.npsn           && { icon: Hash,     label: "NPSN",           value: String(s.npsn),           color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-950/40"  },
-    s.tahun_berdiri  && { icon: Calendar, label: "Tahun Berdiri",  value: String(s.tahun_berdiri),  color: "text-amber-500",  bg: "bg-amber-50 dark:bg-amber-950/40"    },
-    s.akreditasi     && { icon: Award,    label: "Akreditasi",     value: s.akreditasi,             color: "text-green-600",  bg: "bg-green-50 dark:bg-green-950/40"    },
-    s.status         && { icon: BookOpen, label: "Status",         value: s.status,                 color: "text-gray-500",   bg: "bg-gray-50 dark:bg-gray-900/40"      },
-    s.kontak         && { icon: Phone,    label: "Kontak",         value: s.kontak,                 color: "text-pink-500",   bg: "bg-pink-50 dark:bg-pink-950/40"      },
+    s.alamat         && { icon: MapPin,   label: "Alamat",         value: s.alamat,                color: "text-teal-500",   bg: "bg-teal-50 dark:bg-teal-950/40"     },
+    s.kepala_sekolah && { icon: User,     label: "Kepala Sekolah", value: s.kepala_sekolah,         color: "text-blue-500",   bg: "bg-blue-50 dark:bg-blue-950/40"     },
+    s.npsn           && { icon: Hash,     label: "NPSN",           value: String(s.npsn),           color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-950/40" },
+    s.tahun_berdiri  && { icon: Calendar, label: "Tahun Berdiri",  value: String(s.tahun_berdiri),  color: "text-amber-500",  bg: "bg-amber-50 dark:bg-amber-950/40"   },
+    s.akreditasi     && { icon: Award,    label: "Akreditasi",     value: s.akreditasi,             color: "text-green-600",  bg: "bg-green-50 dark:bg-green-950/40"   },
+    s.status         && { icon: BookOpen, label: "Status",         value: s.status,                 color: "text-gray-500",   bg: "bg-gray-50 dark:bg-gray-900/40"     },
+    s.kontak         && { icon: Phone,    label: "Kontak",         value: s.kontak,                 color: "text-pink-500",   bg: "bg-pink-50 dark:bg-pink-950/40"     },
   ].filter(Boolean) as Array<{ icon: any; label: string; value: string; color: string; bg: string }>
 
   return (
@@ -132,7 +124,6 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
 
           {/* Left */}
           <div className="space-y-8">
-            {/* Info grid */}
             <div className="grid gap-3 sm:grid-cols-2">
               {infoItems.map(({ icon: Icon, label, value, color, bg }) => (
                 <div key={label} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
@@ -147,7 +138,6 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
               ))}
             </div>
 
-            {/* Deskripsi */}
             {s.deskripsi && (
               <div>
                 <h2 className="mb-3 font-serif text-xl text-foreground">Tentang Sekolah</h2>
@@ -181,16 +171,16 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
                 </a>
               )}
 
-              {mapsUrl && (
+              {/* ✅ Rute langsung ke Google Maps */}
+              {routeUrl && (
                 <a
-                  href={mapsUrl}
+                  href={routeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted active:scale-[.98]"
+                  className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-blue-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-600 active:scale-[.98]"
                 >
-                  <MapPin className="size-4 text-primary" strokeWidth={1.5} />
-                  Lihat di Google Maps
-                  <ExternalLink className="size-3.5 text-muted-foreground" />
+                  <Navigation className="size-4" />
+                  Rute ke Sini
                 </a>
               )}
 
@@ -203,7 +193,6 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
               </Link>
             </div>
 
-            {/* Breadcrumb */}
             <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
               <Link href="/" className="hover:text-foreground transition">Beranda</Link>
               <ChevronRight className="size-3" />
@@ -213,54 +202,6 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
         </div>
-
-        {/* Related */}
-        {(related ?? []).length > 0 && (
-          <div className="mt-12">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-serif text-xl text-foreground">Sekolah Lainnya</h2>
-              <Link href="/sekolah" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                Lihat Semua <ChevronRight className="size-4" />
-              </Link>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {(related ?? []).map((r: any) => (
-                <Link
-                  key={r.id}
-                  href={"/sekolah/" + r.id}
-                  className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:border-teal-300 hover:shadow-md"
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-                    {r.foto_url ? (
-                      <Image
-                        src={r.foto_url}
-                        alt={r.nama}
-                        fill
-                        className="object-cover transition duration-500 group-hover:scale-105"
-                        unoptimized={String(r.foto_url).startsWith("http")}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center">
-                        <School className="size-8 text-muted-foreground/20" />
-                      </div>
-                    )}
-                    {r.jenjang && (
-                      <span className="absolute left-2 top-2 rounded-full bg-teal-500/90 px-2 py-0.5 text-[10px] font-bold text-white">
-                        {r.jenjang}
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <p className="text-xs text-muted-foreground">
-                      {r.akreditasi ? "Akreditasi " + r.akreditasi : ""}
-                    </p>
-                    <p className="mt-0.5 text-sm font-semibold text-foreground line-clamp-2 leading-snug">{r.nama}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

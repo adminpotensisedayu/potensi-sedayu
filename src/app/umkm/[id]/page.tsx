@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import {
   ArrowLeft, MapPin, Clock, MessageCircle,
-  Tag, Star, ExternalLink, Store, ChevronRight,
+  Tag, Star, Navigation, Store, ChevronRight,
 } from "lucide-react"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!data) return { title: "UMKM Tidak Ditemukan" }
   return {
     title: `${(data as any).nama_usaha} — Potensi Sedayu`,
-    description: (data as any).deskripsi?.slice(0, 150) ?? `Detail UMKM di Desa Sedayu`,
+    description: (data as any).deskripsi?.slice(0, 150) ?? "Detail UMKM di Desa Sedayu",
   }
 }
 
@@ -22,38 +22,35 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: umkm }, { data: related }] = await Promise.all([
-    supabase
-      .from("umkm")
-      .select("*, kategori:kategori_id(nama), sub_kategori:sub_kategori_id(nama)")
-      .eq("id", id)
-      .eq("is_aktif", true)
-      .single(),
-    supabase
-      .from("umkm")
-      .select("id, nama_usaha, foto_url, kategori:kategori_id(nama)")
-      .eq("is_aktif", true)
-      .neq("id", id)
-      .limit(4),
-  ])
+  const { data: umkm } = await supabase
+    .from("umkm")
+    .select("*, kategori:kategori_id(nama), sub_kategori:sub_kategori_id(nama)")
+    .eq("id", id)
+    .eq("is_aktif", true)
+    .single()
 
   if (!umkm) notFound()
 
-  const u          = umkm as any
-  const kategori   = (u.kategori as any)?.nama as string | undefined
-  const subKat     = (u.sub_kategori as any)?.nama as string | undefined
-  const fotos      = [u.foto_url, u.foto_url_2, u.foto_url_3].filter(Boolean) as string[]
-  const mainFoto   = fotos[0]
-  const extraFotos = fotos.slice(1)
+  const u        = umkm as any
+  const kategori = (u.kategori     as any)?.nama as string | undefined
+  const subKat   = (u.sub_kategori as any)?.nama as string | undefined
 
-  // WhatsApp URL — built safely without double-curly-brace placeholders
+  // ✅ Semua foto — hero = foto pertama, galeri = sisanya + hero di akhir
+  const allFotos   = [u.foto_url, u.foto_url_2, u.foto_url_3].filter(Boolean) as string[]
+  const mainFoto   = allFotos[0] ?? null
+  // Galeri: extra fotos dulu, lalu foto utama di posisi akhir
+  const galleryFotos = allFotos.length > 1
+    ? [...allFotos.slice(1), allFotos[0]]
+    : allFotos
+
+  // WhatsApp
   const waNumber = u.whatsapp ? String(u.whatsapp).replace(/\D/g, "") : null
   const waText   = encodeURIComponent("Halo, saya tertarik dengan usaha " + u.nama_usaha)
   const waUrl    = waNumber ? "https://wa.me/" + waNumber + "?text=" + waText : null
 
-  // Google Maps URL
-  const mapsUrl = (u.latitude && u.longitude)
-    ? "https://www.google.com/maps?q=" + u.latitude + "," + u.longitude
+  // ✅ Google Maps RUTE (bukan sekedar lokasi)
+  const routeUrl = (u.latitude && u.longitude)
+    ? "https://www.google.com/maps/dir/?api=1&destination=" + u.latitude + "," + u.longitude
     : null
 
   return (
@@ -118,7 +115,7 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
           {/* Left */}
           <div className="space-y-8">
 
-            {/* Info grid */}
+            {/* Info cards */}
             <div className="grid gap-3 sm:grid-cols-2">
               {u.alamat && (
                 <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
@@ -164,20 +161,33 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
               </div>
             )}
 
-            {/* Extra photos */}
-            {extraFotos.length > 0 && (
+            {/* ✅ Galeri: extra fotos dulu, foto hero di akhir */}
+            {galleryFotos.length > 0 && (
               <div>
-                <h2 className="mb-3 font-serif text-xl text-foreground">Galeri Foto</h2>
-                <div className={`grid gap-3 ${extraFotos.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-                  {extraFotos.map((src, i) => (
-                    <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-muted">
+                <h2 className="mb-3 font-serif text-xl text-foreground">
+                  Galeri Foto
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">({galleryFotos.length} foto)</span>
+                </h2>
+                <div className={`grid gap-3 ${galleryFotos.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                  {galleryFotos.map((src, i) => (
+                    <div
+                      key={i}
+                      className="relative overflow-hidden rounded-2xl border border-border bg-muted"
+                      style={{ aspectRatio: galleryFotos.length === 1 ? "16/9" : "4/3" }}
+                    >
                       <Image
                         src={src}
-                        alt={"Foto " + (i + 2)}
+                        alt={"Foto " + (i + 1)}
                         fill
                         className="object-cover"
                         unoptimized={src.startsWith("http")}
                       />
+                      {/* Tandai foto terakhir sebagai foto utama */}
+                      {i === galleryFotos.length - 1 && allFotos.length > 1 && (
+                        <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                          Foto Utama
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -185,7 +195,7 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
             )}
           </div>
 
-          {/* Right — sticky */}
+          {/* Right — sticky CTA */}
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
               <h3 className="font-semibold text-foreground">Hubungi / Kunjungi</h3>
@@ -202,16 +212,16 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
                 </a>
               )}
 
-              {mapsUrl && (
+              {/* ✅ Rute langsung ke Google Maps */}
+              {routeUrl && (
                 <a
-                  href={mapsUrl}
+                  href={routeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted active:scale-[.98]"
+                  className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-blue-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-600 active:scale-[.98]"
                 >
-                  <MapPin className="size-4 text-primary" strokeWidth={1.5} />
-                  Lihat di Google Maps
-                  <ExternalLink className="size-3.5 text-muted-foreground" />
+                  <Navigation className="size-4" />
+                  Rute ke Sini
                 </a>
               )}
 
@@ -225,7 +235,7 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
             </div>
 
             {/* Breadcrumb */}
-            <div className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
+            <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
               <Link href="/" className="hover:text-foreground transition">Beranda</Link>
               <ChevronRight className="size-3" />
               <Link href="/umkm" className="hover:text-foreground transition">UMKM</Link>
@@ -234,47 +244,6 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
             </div>
           </div>
         </div>
-
-        {/* Related */}
-        {(related ?? []).length > 0 && (
-          <div className="mt-12">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-serif text-xl text-foreground">UMKM Lainnya</h2>
-              <Link href="/umkm" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                Lihat Semua <ChevronRight className="size-4" />
-              </Link>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {(related ?? []).map((r: any) => (
-                <Link
-                  key={r.id}
-                  href={"/umkm/" + r.id}
-                  className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:border-amber-300 hover:shadow-md"
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-                    {r.foto_url ? (
-                      <Image
-                        src={r.foto_url}
-                        alt={r.nama_usaha}
-                        fill
-                        className="object-cover transition duration-500 group-hover:scale-105"
-                        unoptimized={r.foto_url.startsWith("http")}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center">
-                        <Store className="size-8 text-muted-foreground/20" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <p className="text-xs text-muted-foreground">{(r.kategori as any)?.nama ?? ""}</p>
-                    <p className="mt-0.5 text-sm font-semibold text-foreground line-clamp-2 leading-snug">{r.nama_usaha}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
