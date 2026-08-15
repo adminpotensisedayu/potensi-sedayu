@@ -26,14 +26,15 @@ export default async function PengajuanPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+
+      {/* Header — responsive */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="mb-1 flex items-center gap-1.5 text-xs text-muted-foreground">
             <ClipboardList className="size-3.5" />
             <span>Admin</span>
           </div>
-          <h1 className="font-serif text-2xl font-bold text-foreground">
+          <h1 className="font-serif text-xl font-bold text-foreground sm:text-2xl">
             Pengajuan UMKM
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -41,31 +42,19 @@ export default async function PengajuanPage() {
           </p>
         </div>
 
-        {/* Stat cards */}
-        <div className="flex gap-2">
-          <div className="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-2 text-center dark:border-yellow-900 dark:bg-yellow-950/30">
-            <div className="text-xl font-bold text-yellow-700 dark:text-yellow-400">
-              {counts.menunggu}
-            </div>
-            <div className="text-[10px] font-medium text-yellow-600 dark:text-yellow-500">
-              Menunggu
-            </div>
+        {/* Stat cards — wrap on mobile */}
+        <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:shrink-0">
+          <div className="flex-1 min-w-[70px] rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-center sm:px-4 dark:border-yellow-900 dark:bg-yellow-950/30">
+            <div className="text-lg font-bold text-yellow-700 sm:text-xl dark:text-yellow-400">{counts.menunggu}</div>
+            <div className="text-[10px] font-medium text-yellow-600 dark:text-yellow-500">Menunggu</div>
           </div>
-          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-center dark:border-green-900 dark:bg-green-950/30">
-            <div className="text-xl font-bold text-green-700 dark:text-green-400">
-              {counts.disetujui}
-            </div>
-            <div className="text-[10px] font-medium text-green-600 dark:text-green-500">
-              Disetujui
-            </div>
+          <div className="flex-1 min-w-[70px] rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-center sm:px-4 dark:border-green-900 dark:bg-green-950/30">
+            <div className="text-lg font-bold text-green-700 sm:text-xl dark:text-green-400">{counts.disetujui}</div>
+            <div className="text-[10px] font-medium text-green-600 dark:text-green-500">Disetujui</div>
           </div>
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-center dark:border-red-900 dark:bg-red-950/30">
-            <div className="text-xl font-bold text-red-700 dark:text-red-400">
-              {counts.ditolak}
-            </div>
-            <div className="text-[10px] font-medium text-red-600 dark:text-red-500">
-              Ditolak
-            </div>
+          <div className="flex-1 min-w-[70px] rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-center sm:px-4 dark:border-red-900 dark:bg-red-950/30">
+            <div className="text-lg font-bold text-red-700 sm:text-xl dark:text-red-400">{counts.ditolak}</div>
+            <div className="text-[10px] font-medium text-red-600 dark:text-red-500">Ditolak</div>
           </div>
         </div>
       </div>
