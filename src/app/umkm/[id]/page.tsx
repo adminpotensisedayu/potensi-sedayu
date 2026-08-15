@@ -35,10 +35,11 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
   const kategori = (u.kategori     as any)?.nama as string | undefined
   const subKat   = (u.sub_kategori as any)?.nama as string | undefined
 
-  // ✅ Semua foto — hero = foto pertama, galeri = sisanya + hero di akhir
-  const allFotos   = [u.foto_url, u.foto_url_2, u.foto_url_3].filter(Boolean) as string[]
-  const mainFoto   = allFotos[0] ?? null
-  // Galeri: extra fotos dulu, lalu foto utama di posisi akhir
+  // Semua foto valid
+  const allFotos = [u.foto_url, u.foto_url_2, u.foto_url_3].filter(Boolean) as string[]
+  const mainFoto = allFotos[0] ?? null
+
+  // Galeri: foto tambahan dulu, foto utama (hero) di urutan AKHIR, tanpa label
   const galleryFotos = allFotos.length > 1
     ? [...allFotos.slice(1), allFotos[0]]
     : allFotos
@@ -48,7 +49,7 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
   const waText   = encodeURIComponent("Halo, saya tertarik dengan usaha " + u.nama_usaha)
   const waUrl    = waNumber ? "https://wa.me/" + waNumber + "?text=" + waText : null
 
-  // ✅ Google Maps RUTE (bukan sekedar lokasi)
+  // Rute Google Maps → titik awal dari GPS user
   const routeUrl = (u.latitude && u.longitude)
     ? "https://www.google.com/maps/dir/?api=1&destination=" + u.latitude + "," + u.longitude
     : null
@@ -59,14 +60,8 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
       {/* Hero */}
       <div className="relative h-[55vw] max-h-[520px] min-h-[280px] w-full overflow-hidden bg-muted">
         {mainFoto ? (
-          <Image
-            src={mainFoto}
-            alt={u.nama_usaha}
-            fill
-            className="object-cover"
-            unoptimized={mainFoto.startsWith("http")}
-            priority
-          />
+          <Image src={mainFoto} alt={u.nama_usaha} fill className="object-cover"
+            unoptimized={mainFoto.startsWith("http")} priority />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <Store className="size-20 text-muted-foreground/20" />
@@ -74,12 +69,9 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
 
-        <Link
-          href="/umkm"
-          className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-black/60"
-        >
-          <ArrowLeft className="size-3.5" />
-          Kembali
+        <Link href="/umkm"
+          className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-black/60">
+          <ArrowLeft className="size-3.5" /> Kembali
         </Link>
 
         {u.is_unggulan && (
@@ -92,14 +84,10 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             {kategori && (
-              <span className="rounded-full bg-amber-400/90 px-3 py-1 text-xs font-bold text-white backdrop-blur-sm">
-                {kategori}
-              </span>
+              <span className="rounded-full bg-amber-400/90 px-3 py-1 text-xs font-bold text-white backdrop-blur-sm">{kategori}</span>
             )}
             {subKat && (
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                {subKat}
-              </span>
+              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">{subKat}</span>
             )}
           </div>
           <h1 className="font-serif text-2xl font-semibold leading-tight text-white drop-shadow-sm sm:text-3xl lg:text-4xl">
@@ -161,7 +149,7 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
               </div>
             )}
 
-            {/* ✅ Galeri: extra fotos dulu, foto hero di akhir */}
+            {/* ✅ Galeri: foto tambahan dulu, foto hero di AKHIR, tanpa label apapun */}
             {galleryFotos.length > 0 && (
               <div>
                 <h2 className="mb-3 font-serif text-xl text-foreground">
@@ -170,24 +158,10 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
                 </h2>
                 <div className={`grid gap-3 ${galleryFotos.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                   {galleryFotos.map((src, i) => (
-                    <div
-                      key={i}
-                      className="relative overflow-hidden rounded-2xl border border-border bg-muted"
-                      style={{ aspectRatio: galleryFotos.length === 1 ? "16/9" : "4/3" }}
-                    >
-                      <Image
-                        src={src}
-                        alt={"Foto " + (i + 1)}
-                        fill
-                        className="object-cover"
-                        unoptimized={src.startsWith("http")}
-                      />
-                      {/* Tandai foto terakhir sebagai foto utama */}
-                      {i === galleryFotos.length - 1 && allFotos.length > 1 && (
-                        <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
-                          Foto Utama
-                        </span>
-                      )}
+                    <div key={i} className="relative overflow-hidden rounded-2xl border border-border bg-muted"
+                      style={{ aspectRatio: galleryFotos.length === 1 ? "16/9" : "4/3" }}>
+                      <Image src={src} alt={"Foto " + (i + 1)} fill className="object-cover"
+                        unoptimized={src.startsWith("http")} />
                     </div>
                   ))}
                 </div>
@@ -195,46 +169,31 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
             )}
           </div>
 
-          {/* Right — sticky CTA */}
+          {/* Right sticky */}
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
               <h3 className="font-semibold text-foreground">Hubungi / Kunjungi</h3>
 
               {waUrl && (
-                <a
-                  href={waUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-600 active:scale-[.98]"
-                >
-                  <MessageCircle className="size-4" />
-                  Chat via WhatsApp
+                <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-600 active:scale-[.98]">
+                  <MessageCircle className="size-4" /> Chat via WhatsApp
                 </a>
               )}
 
-              {/* ✅ Rute langsung ke Google Maps */}
               {routeUrl && (
-                <a
-                  href={routeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-blue-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-600 active:scale-[.98]"
-                >
-                  <Navigation className="size-4" />
-                  Rute ke Sini
+                <a href={routeUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-blue-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-600 active:scale-[.98]">
+                  <Navigation className="size-4" /> Rute ke Sini
                 </a>
               )}
 
-              <Link
-                href="/peta"
-                className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted active:scale-[.98]"
-              >
-                <MapPin className="size-4 text-amber-500" strokeWidth={1.5} />
-                Lihat di Peta Desa
+              <Link href="/peta"
+                className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted active:scale-[.98]">
+                <MapPin className="size-4 text-amber-500" strokeWidth={1.5} /> Lihat di Peta Desa
               </Link>
             </div>
 
-            {/* Breadcrumb */}
             <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
               <Link href="/" className="hover:text-foreground transition">Beranda</Link>
               <ChevronRight className="size-3" />
