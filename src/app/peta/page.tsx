@@ -1,55 +1,80 @@
-﻿// src/app/peta/page.tsx
 import { createClient } from "@/lib/supabase/server"
-import { PetaExplorer } from "@/components/map/peta-explorer"
-import type { MapPoint } from "@/components/map/peta-explorer"
+import dynamic from "next/dynamic"
 
-export const metadata = { title: "Peta Potensi — Desa Sedayu" }
+export const revalidate = 300
+
+const PetaExplorer = dynamic(() => import("@/components/map/peta-explorer"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-muted/30">
+      <div className="space-y-3 text-center">
+        <div className="mx-auto size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <p className="text-sm text-muted-foreground">Memuat peta interaktif…</p>
+      </div>
+    </div>
+  ),
+})
+
+export type MapPoint = {
+  id: string
+  lat: number
+  lng: number
+  sector: "umkm" | "sekolah"
+  label: string
+  alamat?: string
+  subLabel?: string
+  subKat?: string
+  href: string
+  foto?: string
+}
 
 export default async function PetaPage() {
   const supabase = await createClient()
 
-  const [{ data: umkmData }, { data: sekolahData }] = await Promise.all([
+  const [{ data: umkmRows }, { data: sekolahRows }] = await Promise.all([
     supabase
       .from("umkm")
-      .select("id, nama_usaha, deskripsi, alamat, latitude, longitude, kategori:kategori_id(nama)")
+      .select("id, nama_usaha, alamat, latitude, longitude, foto_url, kategori:kategori_id(nama), sub_kategori:sub_kategori_id(nama)")
       .eq("is_aktif", true)
-      .not("latitude", "is", null),
+      .not("latitude", "is", null)
+      .not("longitude", "is", null),
     supabase
       .from("sekolah")
-      .select("id, nama, jenjang, alamat, latitude, longitude")
+      .select("id, nama, jenjang, akreditasi, alamat, latitude, longitude, foto_url")
       .eq("is_aktif", true)
-      .not("latitude", "is", null),
+      .not("latitude", "is", null)
+      .not("longitude", "is", null),
   ])
 
   const points: MapPoint[] = [
-    ...(umkmData ?? []).map((u: any) => ({
-      id:       u.id,
-      lat:      u.latitude  as number,
-      lng:      u.longitude as number,
-      sector:   "umkm"      as const,
+    ...(umkmRows ?? []).map((u: any) => ({
+      id:       String(u.id),
+      lat:      Number(u.latitude),
+      lng:      Number(u.longitude),
+      sector:   "umkm" as const,
       label:    u.nama_usaha,
-      desc:     u.deskripsi     ?? undefined,
-      alamat:   u.alamat        ?? undefined,
+      alamat:   u.alamat   ?? undefined,
       subLabel: u.kategori?.nama ?? undefined,
-      subKat:   u.kategori?.nama ?? undefined,
+      subKat:   u.sub_kategori?.nama ?? undefined,
       href:     `/umkm/${u.id}`,
+      foto:     u.foto_url ?? undefined,
     })),
-    ...(sekolahData ?? []).map((s: any) => ({
-      id:       s.id,
-      lat:      s.latitude  as number,
-      lng:      s.longitude as number,
-      sector:   "sekolah"   as const,
+    ...(sekolahRows ?? []).map((s: any) => ({
+      id:       String(s.id),
+      lat:      Number(s.latitude),
+      lng:      Number(s.longitude),
+      sector:   "sekolah" as const,
       label:    s.nama,
-      desc:     s.jenjang   ?? undefined,
-      alamat:   s.alamat    ?? undefined,
-      subLabel: s.jenjang   ?? undefined,
-      subKat:   s.jenjang   ?? undefined,
+      alamat:   s.alamat ?? undefined,
+      subLabel: s.jenjang ?? undefined,
+      subKat:   s.akreditasi ? `Akreditasi ${s.akreditasi}` : undefined,
       href:     `/sekolah/${s.id}`,
+      foto:     s.foto_url ?? undefined,
     })),
   ]
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
+    <div className="flex flex-col" style={{ height: "calc(100dvh - 64px)" }}>
       <PetaExplorer points={points} />
     </div>
   )
