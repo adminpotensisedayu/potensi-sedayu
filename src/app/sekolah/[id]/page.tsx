@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { data } = await supabase.from("sekolah").select("nama, jenjang").eq("id", id).single()
   if (!data) return { title: "Sekolah Tidak Ditemukan" }
   return {
-    title: `${data.nama} — Potensi Sedayu`,
-    description: `Profil ${data.jenjang ?? "sekolah"} ${data.nama} di Desa Sedayu`,
+    title: `${(data as any).nama} — Potensi Sedayu`,
+    description: `Profil ${(data as any).jenjang ?? "sekolah"} ${(data as any).nama} di Desa Sedayu`,
   }
 }
 
@@ -42,8 +42,13 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
 
   const s = sekolah as any
 
-  const mapsUrl = s.latitude && s.longitude
-    ? `https://www.google.com/maps?q=${s.latitude},${s.longitude}`
+  // URLs — built with string concatenation, no template-literal placeholders
+  const mapsUrl = (s.latitude && s.longitude)
+    ? "https://www.google.com/maps?q=" + s.latitude + "," + s.longitude
+    : null
+
+  const websiteUrl = s.website
+    ? (String(s.website).startsWith("http") ? s.website : "https://" + s.website)
     : null
 
   const jenjangColor: Record<string, string> = {
@@ -57,19 +62,19 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
   const jColor = jenjangColor[s.jenjang ?? ""] ?? "bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-400"
 
   const infoItems = [
-    s.alamat         && { icon: MapPin,   label: "Alamat",          value: s.alamat,         color: "text-teal-500",   bg: "bg-teal-50 dark:bg-teal-950/40"     },
-    s.kepala_sekolah && { icon: User,     label: "Kepala Sekolah",  value: s.kepala_sekolah, color: "text-blue-500",   bg: "bg-blue-50 dark:bg-blue-950/40"     },
-    s.npsn           && { icon: Hash,     label: "NPSN",            value: s.npsn,           color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-950/40" },
-    s.tahun_berdiri  && { icon: Calendar, label: "Tahun Berdiri",   value: String(s.tahun_berdiri), color: "text-amber-500",  bg: "bg-amber-50 dark:bg-amber-950/40"   },
-    s.akreditasi     && { icon: Award,    label: "Akreditasi",      value: s.akreditasi,     color: "text-green-600",  bg: "bg-green-50 dark:bg-green-950/40"   },
-    s.status         && { icon: BookOpen, label: "Status",          value: s.status,         color: "text-gray-500",   bg: "bg-gray-50 dark:bg-gray-900/40"     },
-    s.kontak         && { icon: Phone,    label: "Kontak",          value: s.kontak,         color: "text-pink-500",   bg: "bg-pink-50 dark:bg-pink-950/40"     },
+    s.alamat         && { icon: MapPin,   label: "Alamat",         value: s.alamat,                color: "text-teal-500",   bg: "bg-teal-50 dark:bg-teal-950/40"      },
+    s.kepala_sekolah && { icon: User,     label: "Kepala Sekolah", value: s.kepala_sekolah,         color: "text-blue-500",   bg: "bg-blue-50 dark:bg-blue-950/40"      },
+    s.npsn           && { icon: Hash,     label: "NPSN",           value: String(s.npsn),           color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-950/40"  },
+    s.tahun_berdiri  && { icon: Calendar, label: "Tahun Berdiri",  value: String(s.tahun_berdiri),  color: "text-amber-500",  bg: "bg-amber-50 dark:bg-amber-950/40"    },
+    s.akreditasi     && { icon: Award,    label: "Akreditasi",     value: s.akreditasi,             color: "text-green-600",  bg: "bg-green-50 dark:bg-green-950/40"    },
+    s.status         && { icon: BookOpen, label: "Status",         value: s.status,                 color: "text-gray-500",   bg: "bg-gray-50 dark:bg-gray-900/40"      },
+    s.kontak         && { icon: Phone,    label: "Kontak",         value: s.kontak,                 color: "text-pink-500",   bg: "bg-pink-50 dark:bg-pink-950/40"      },
   ].filter(Boolean) as Array<{ icon: any; label: string; value: string; color: string; bg: string }>
 
   return (
     <div className="min-h-screen bg-background">
 
-      {/* ── Hero ── */}
+      {/* Hero */}
       <div className="relative h-[50vw] max-h-[460px] min-h-[260px] w-full overflow-hidden bg-muted">
         {s.foto_url ? (
           <Image
@@ -77,7 +82,7 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
             alt={s.nama}
             fill
             className="object-cover"
-            unoptimized={s.foto_url.startsWith("http")}
+            unoptimized={String(s.foto_url).startsWith("http")}
             priority
           />
         ) : (
@@ -87,7 +92,6 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
 
-        {/* Back */}
         <Link
           href="/sekolah"
           className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-black/60"
@@ -96,7 +100,6 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
           Kembali
         </Link>
 
-        {/* Unggulan */}
         {s.is_unggulan && (
           <div className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-teal-500/90 px-3 py-1.5 backdrop-blur-sm">
             <Star className="size-3.5 fill-white text-white" />
@@ -104,7 +107,6 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
           </div>
         )}
 
-        {/* Title overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             {s.jenjang && (
@@ -124,23 +126,22 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      {/* ── Content ── */}
+      {/* Content */}
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
+        <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
 
           {/* Left */}
           <div className="space-y-8">
-
             {/* Info grid */}
             <div className="grid gap-3 sm:grid-cols-2">
               {infoItems.map(({ icon: Icon, label, value, color, bg }) => (
                 <div key={label} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
-                  <div className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${bg}`}>
-                    <Icon className={`size-4 ${color}`} strokeWidth={1.5} />
+                  <div className={"flex size-9 shrink-0 items-center justify-center rounded-xl " + bg}>
+                    <Icon className={"size-4 " + color} strokeWidth={1.5} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">{label}</p>
-                    <p className="mt-0.5 text-sm font-medium text-foreground leading-snug">{value}</p>
+                    <p className="mt-0.5 text-sm font-medium text-foreground leading-snug break-words">{value}</p>
                   </div>
                 </div>
               ))}
@@ -158,19 +159,18 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
           {/* Right sticky */}
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-              <h3 className="font-semibold text-foreground">Info & Kontak</h3>
+              <h3 className="font-semibold text-foreground">Info &amp; Kontak</h3>
 
-              {/* Jenjang chip */}
               {s.jenjang && (
-                <div className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold ${jColor}`}>
+                <div className={"inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold " + jColor}>
                   <BookOpen className="size-3.5" strokeWidth={1.5} />
                   {s.jenjang}
                 </div>
               )}
 
-              {s.website && (
+              {websiteUrl && (
                 <a
-                  href={s.website.startsWith("http") ? s.website : `https://${s.website}`}
+                  href={websiteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted active:scale-[.98]"
@@ -204,12 +204,12 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
             </div>
 
             {/* Breadcrumb */}
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
               <Link href="/" className="hover:text-foreground transition">Beranda</Link>
               <ChevronRight className="size-3" />
               <Link href="/sekolah" className="hover:text-foreground transition">Sekolah</Link>
               <ChevronRight className="size-3" />
-              <span className="text-foreground truncate max-w-[120px]">{s.nama}</span>
+              <span className="text-foreground truncate max-w-[130px]">{s.nama}</span>
             </div>
           </div>
         </div>
@@ -227,7 +227,7 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
               {(related ?? []).map((r: any) => (
                 <Link
                   key={r.id}
-                  href={`/sekolah/${r.id}`}
+                  href={"/sekolah/" + r.id}
                   className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:border-teal-300 hover:shadow-md"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-muted">
@@ -237,7 +237,7 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
                         alt={r.nama}
                         fill
                         className="object-cover transition duration-500 group-hover:scale-105"
-                        unoptimized={r.foto_url.startsWith("http")}
+                        unoptimized={String(r.foto_url).startsWith("http")}
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">
@@ -251,7 +251,9 @@ export default async function SekolahDetailPage({ params }: { params: Promise<{ 
                     )}
                   </div>
                   <div className="p-3">
-                    <p className="text-xs text-muted-foreground">{r.akreditasi ? `Akreditasi ${r.akreditasi}` : ""}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {r.akreditasi ? "Akreditasi " + r.akreditasi : ""}
+                    </p>
                     <p className="mt-0.5 text-sm font-semibold text-foreground line-clamp-2 leading-snug">{r.nama}</p>
                   </div>
                 </Link>

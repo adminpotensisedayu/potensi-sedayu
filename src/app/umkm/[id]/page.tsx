@@ -13,8 +13,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { data } = await supabase.from("umkm").select("nama_usaha, deskripsi").eq("id", id).single()
   if (!data) return { title: "UMKM Tidak Ditemukan" }
   return {
-    title: `${data.nama_usaha} — Potensi Sedayu`,
-    description: data.deskripsi?.slice(0, 150) ?? `Detail UMKM ${data.nama_usaha} di Desa Sedayu`,
+    title: `${(data as any).nama_usaha} — Potensi Sedayu`,
+    description: (data as any).deskripsi?.slice(0, 150) ?? `Detail UMKM di Desa Sedayu`,
   }
 }
 
@@ -39,25 +39,27 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
 
   if (!umkm) notFound()
 
-  const u = umkm as any
-  const fotos = [u.foto_url, u.foto_url_2, u.foto_url_3].filter(Boolean) as string[]
-  const mainFoto = fotos[0]
+  const u          = umkm as any
+  const kategori   = (u.kategori as any)?.nama as string | undefined
+  const subKat     = (u.sub_kategori as any)?.nama as string | undefined
+  const fotos      = [u.foto_url, u.foto_url_2, u.foto_url_3].filter(Boolean) as string[]
+  const mainFoto   = fotos[0]
   const extraFotos = fotos.slice(1)
 
-  const waUrl = u.whatsapp
-    ? `https://wa.me/${String(u.whatsapp).replace(/\D/g, "")}?text=Halo%2C saya tertarik dengan usaha ${encodeURIComponent(u.nama_usaha)}`
-    : null
-  const mapsUrl = u.latitude && u.longitude
-    ? `https://www.google.com/maps?q=${u.latitude},${u.longitude}`
-    : null
+  // WhatsApp URL — built safely without double-curly-brace placeholders
+  const waNumber = u.whatsapp ? String(u.whatsapp).replace(/\D/g, "") : null
+  const waText   = encodeURIComponent("Halo, saya tertarik dengan usaha " + u.nama_usaha)
+  const waUrl    = waNumber ? "https://wa.me/" + waNumber + "?text=" + waText : null
 
-  const kategori    = (u.kategori    as any)?.nama
-  const subKategori = (u.sub_kategori as any)?.nama
+  // Google Maps URL
+  const mapsUrl = (u.latitude && u.longitude)
+    ? "https://www.google.com/maps?q=" + u.latitude + "," + u.longitude
+    : null
 
   return (
     <div className="min-h-screen bg-background">
 
-      {/* ── Hero ── */}
+      {/* Hero */}
       <div className="relative h-[55vw] max-h-[520px] min-h-[280px] w-full overflow-hidden bg-muted">
         {mainFoto ? (
           <Image
@@ -73,10 +75,8 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
             <Store className="size-20 text-muted-foreground/20" />
           </div>
         )}
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
 
-        {/* Back button */}
         <Link
           href="/umkm"
           className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-black/60"
@@ -85,7 +85,6 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
           Kembali
         </Link>
 
-        {/* Unggulan badge */}
         {u.is_unggulan && (
           <div className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-amber-400/90 px-3 py-1.5 backdrop-blur-sm">
             <Star className="size-3.5 fill-white text-white" />
@@ -93,7 +92,6 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
-        {/* Title overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             {kategori && (
@@ -101,9 +99,9 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
                 {kategori}
               </span>
             )}
-            {subKategori && (
+            {subKat && (
               <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                {subKategori}
+                {subKat}
               </span>
             )}
           </div>
@@ -113,14 +111,14 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      {/* ── Content ── */}
+      {/* Content */}
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
+        <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
 
-          {/* Left column */}
+          {/* Left */}
           <div className="space-y-8">
 
-            {/* Info cards */}
+            {/* Info grid */}
             <div className="grid gap-3 sm:grid-cols-2">
               {u.alamat && (
                 <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
@@ -152,7 +150,7 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">Kategori</p>
                     <p className="mt-0.5 text-sm font-medium text-foreground">{kategori}</p>
-                    {subKategori && <p className="text-xs text-muted-foreground">{subKategori}</p>}
+                    {subKat && <p className="text-xs text-muted-foreground">{subKat}</p>}
                   </div>
                 </div>
               )}
@@ -173,7 +171,13 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
                 <div className={`grid gap-3 ${extraFotos.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                   {extraFotos.map((src, i) => (
                     <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-muted">
-                      <Image src={src} alt={`Foto ${i + 2}`} fill className="object-cover" unoptimized={src.startsWith("http")} />
+                      <Image
+                        src={src}
+                        alt={"Foto " + (i + 2)}
+                        fill
+                        className="object-cover"
+                        unoptimized={src.startsWith("http")}
+                      />
                     </div>
                   ))}
                 </div>
@@ -181,7 +185,7 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
             )}
           </div>
 
-          {/* Right column — sticky actions */}
+          {/* Right — sticky */}
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
               <h3 className="font-semibold text-foreground">Hubungi / Kunjungi</h3>
@@ -221,17 +225,17 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
             </div>
 
             {/* Breadcrumb */}
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
               <Link href="/" className="hover:text-foreground transition">Beranda</Link>
               <ChevronRight className="size-3" />
               <Link href="/umkm" className="hover:text-foreground transition">UMKM</Link>
               <ChevronRight className="size-3" />
-              <span className="text-foreground truncate max-w-[120px]">{u.nama_usaha}</span>
+              <span className="text-foreground truncate max-w-[130px]">{u.nama_usaha}</span>
             </div>
           </div>
         </div>
 
-        {/* Related UMKM */}
+        {/* Related */}
         {(related ?? []).length > 0 && (
           <div className="mt-12">
             <div className="mb-4 flex items-center justify-between">
@@ -244,7 +248,7 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
               {(related ?? []).map((r: any) => (
                 <Link
                   key={r.id}
-                  href={`/umkm/${r.id}`}
+                  href={"/umkm/" + r.id}
                   className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:border-amber-300 hover:shadow-md"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-muted">

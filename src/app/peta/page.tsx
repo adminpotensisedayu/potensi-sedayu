@@ -3,17 +3,10 @@ import dynamic from "next/dynamic"
 
 export const revalidate = 300
 
-const PetaExplorer = dynamic(() => import("@/components/map/peta-explorer"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-muted/30">
-      <div className="space-y-3 text-center">
-        <div className="mx-auto size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <p className="text-sm text-muted-foreground">Memuat peta interaktif…</p>
-      </div>
-    </div>
-  ),
-})
+const PetaExplorer = dynamic(
+  () => import("@/components/map/peta-explorer"),
+  { ssr: false }
+)
 
 export type MapPoint = {
   id: string
