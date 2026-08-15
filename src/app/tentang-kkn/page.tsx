@@ -1,4 +1,4 @@
-﻿import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { Users, CalendarDays, Sprout } from "lucide-react"
 
 export const revalidate = 3600
@@ -27,7 +27,7 @@ export default async function TentangKknPage() {
     supabase.from("tim_kkn").select("*").order("nama"),
     supabase.from("kegiatan_kkn").select("*").order("tanggal", { ascending: true }),
   ])
-  const tim = (timRes.data ?? []) as any[]
+  const tim      = (timRes.data      ?? []) as any[]
   const kegiatan = (kegiatanRes.data ?? []) as any[]
 
   return (
@@ -53,6 +53,7 @@ export default async function TentangKknPage() {
         </p>
       </section>
 
+      {/* ---- ANGGOTA TIM ---- */}
       <section className="mt-12">
         <div className="mb-5 flex items-center gap-2">
           <Users className="size-5 text-primary" strokeWidth={1.5} />
@@ -81,9 +82,9 @@ export default async function TentangKknPage() {
                   </div>
                 </div>
                 <dl className="mt-4 space-y-1 text-sm text-muted-foreground">
-                  {m.nim ? <div>NIM: {m.nim}</div> : null}
-                  {m.program_studi ? <div>{m.program_studi}</div> : null}
-                  {m.fakultas ? <div>{m.fakultas}</div> : null}
+                  {m.nim          ? <div>NIM: {m.nim}</div>          : null}
+                  {m.program_studi ? <div>{m.program_studi}</div>    : null}
+                  {m.fakultas      ? <div>{m.fakultas}</div>         : null}
                 </dl>
               </div>
             ))}
@@ -91,6 +92,7 @@ export default async function TentangKknPage() {
         )}
       </section>
 
+      {/* ---- TIMELINE KEGIATAN ---- */}
       <section className="mt-12">
         <div className="mb-5 flex items-center gap-2">
           <CalendarDays className="size-5 text-primary" strokeWidth={1.5} />
@@ -101,15 +103,31 @@ export default async function TentangKknPage() {
             Belum ada kegiatan yang tercatat.
           </p>
         ) : (
-          <ol className="relative space-y-6 border-l border-border pl-6">
+          <ol className="relative space-y-8 border-l border-border pl-6">
             {kegiatan.map((k) => (
               <li key={k.id} className="relative">
                 <span className="absolute -left-[30px] top-1.5 size-3 rounded-full bg-primary" />
+
                 {k.tanggal ? (
                   <p className="text-xs font-medium text-primary">{tanggalID(k.tanggal)}</p>
                 ) : null}
+
                 <h3 className="mt-0.5 font-serif text-lg text-foreground">{k.judul}</h3>
-                {k.deskripsi ? <p className="mt-1 text-sm text-muted-foreground">{k.deskripsi}</p> : null}
+
+                {k.deskripsi ? (
+                  <p className="mt-1 text-sm text-muted-foreground">{k.deskripsi}</p>
+                ) : null}
+
+                {/* ✅ Foto kegiatan */}
+                {k.foto_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={k.foto_url}
+                    alt={k.judul}
+                    className="mt-3 w-full max-w-lg rounded-xl object-cover"
+                    style={{ maxHeight: "280px" }}
+                  />
+                ) : null}
               </li>
             ))}
           </ol>
