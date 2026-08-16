@@ -112,3 +112,29 @@ export async function tolakPengajuan(
   revalidatePath("/admin/pengajuan")
   return { success: true }
 }
+// ─────────────────────────────────────────────────────────────
+// Hapus pengajuan (hanya yang sudah diproses)
+// ─────────────────────────────────────────────────────────────
+export async function hapusPengajuan(id: string): Promise<ActionResult> {
+  const admin = createAdminClient()
+
+  // Pastikan bukan "menunggu" dulu
+  const { data: p } = await admin
+    .from("pengajuan_umkm")
+    .select("status")
+    .eq("id", id)
+    .single()
+
+  if (p?.status === "menunggu")
+    return { error: "Pengajuan yang masih menunggu tidak bisa dihapus" }
+
+  const { error } = await admin
+    .from("pengajuan_umkm")
+    .delete()
+    .eq("id", id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/admin/pengajuan")
+  return { success: true }
+}

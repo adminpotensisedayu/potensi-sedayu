@@ -17,10 +17,11 @@ export default async function AdminSekolahPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
+      {/* Header */}
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-serif text-3xl text-foreground">Kelola Sekolah</h1>
-          <p className="mt-1 text-muted-foreground">{rows.length} sekolah terdaftar</p>
+          <h1 className="font-serif text-2xl font-bold text-foreground sm:text-3xl">Kelola Sekolah</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{rows.length} sekolah terdaftar</p>
         </div>
         <Link
           href="/admin/sekolah/baru"
@@ -38,60 +39,107 @@ export default async function AdminSekolahPage() {
           <p className="text-sm text-muted-foreground">Klik Tambah Sekolah untuk mulai.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-secondary/40 text-left text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-medium">Nama Sekolah</th>
-                <th className="px-4 py-3 font-medium">Jenjang</th>
-                <th className="px-4 py-3 font-medium">Akreditasi</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 text-right font-medium">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((s) => (
-                <tr key={s.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3">
-                    <span className="flex items-center gap-2 font-medium text-foreground">
+        <>
+          {/* ── MOBILE: card list ── */}
+          <div className="space-y-2 md:hidden">
+            {rows.map((s) => (
+              <div key={s.id} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
                       {s.is_unggulan && (
-                        <Star className="size-4 fill-amber-500 text-amber-500" strokeWidth={0} />
+                        <Star className="size-3.5 shrink-0 fill-amber-500 text-amber-500" strokeWidth={0} />
                       )}
-                      {s.nama}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-full bg-[#0D9488]/10 px-2.5 py-0.5 text-xs font-bold text-[#0D9488]">
-                      {s.jenjang ?? "-"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {s.akreditasi ? `Akreditasi ${s.akreditasi}` : "-"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {s.is_aktif ? (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Aktif</span>
-                    ) : (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">Nonaktif</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <Link
-                        href={`/admin/sekolah/${s.id}`}
-                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-foreground transition hover:bg-secondary"
-                      >
-                        <Pencil className="size-4" strokeWidth={1.5} />
-                        Edit
-                      </Link>
-                      <DeleteButton table="sekolah" id={s.id} label={`Hapus "${s.nama}"?`} />
+                      <p className="truncate font-semibold text-foreground">{s.nama}</p>
                     </div>
-                  </td>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      {s.jenjang && (
+                        <span className="rounded-full bg-[#0D9488]/10 px-2 py-0.5 text-xs font-bold text-[#0D9488]">
+                          {s.jenjang}
+                        </span>
+                      )}
+                      {s.akreditasi && (
+                        <span className="text-xs text-muted-foreground">Akreditasi {s.akreditasi}</span>
+                      )}
+                    </div>
+                    <div className="mt-2">
+                      {s.is_aktif ? (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Aktif</span>
+                      ) : (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">Nonaktif</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Link
+                      href={"/admin/sekolah/" + s.id}
+                      className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                    >
+                      <Pencil className="size-4" strokeWidth={1.5} />
+                    </Link>
+                    <DeleteButton table="sekolah" id={s.id} label={"Hapus \"" + s.nama + "\"?"} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── DESKTOP: table ── */}
+          <div className="hidden overflow-x-auto rounded-2xl border border-border bg-card md:block">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-secondary/40 text-left text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Nama Sekolah</th>
+                  <th className="px-4 py-3 font-medium">Jenjang</th>
+                  <th className="px-4 py-3 font-medium">Akreditasi</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 text-right font-medium">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {rows.map((s) => (
+                  <tr key={s.id} className="border-b border-border last:border-0">
+                    <td className="px-4 py-3">
+                      <span className="flex items-center gap-2 font-medium text-foreground">
+                        {s.is_unggulan && (
+                          <Star className="size-4 fill-amber-500 text-amber-500" strokeWidth={0} />
+                        )}
+                        {s.nama}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-[#0D9488]/10 px-2.5 py-0.5 text-xs font-bold text-[#0D9488]">
+                        {s.jenjang ?? "-"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {s.akreditasi ? "Akreditasi " + s.akreditasi : "-"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {s.is_aktif ? (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Aktif</span>
+                      ) : (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">Nonaktif</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <Link
+                          href={"/admin/sekolah/" + s.id}
+                          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-foreground transition hover:bg-secondary"
+                        >
+                          <Pencil className="size-4" strokeWidth={1.5} />
+                          Edit
+                        </Link>
+                        <DeleteButton table="sekolah" id={s.id} label={"Hapus \"" + s.nama + "\"?"} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )
