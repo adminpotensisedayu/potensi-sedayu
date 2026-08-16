@@ -6,19 +6,16 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import {
-  LayoutDashboard,
-  Store,
-  School,
-  ClipboardList,
-  Users,
-  Settings,
-  LogOut,
+  LayoutDashboard, Store, School, ClipboardList,
+  Users, Settings, LogOut, X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 
 export interface AdminSidebarProps {
   email: string
+  isOpen?: boolean
+  onClose?: () => void
 }
 
 const NAV_ITEMS = [
@@ -30,7 +27,7 @@ const NAV_ITEMS = [
   { href: "/admin/pengaturan", label: "Pengaturan",     icon: Settings,        exact: false },
 ]
 
-export function AdminSidebar({ email }: AdminSidebarProps) {
+export function AdminSidebar({ email, isOpen = false, onClose }: AdminSidebarProps) {
   const pathname = usePathname()
   const router   = useRouter()
   const supabase = createClient()
@@ -43,8 +40,14 @@ export function AdminSidebar({ email }: AdminSidebarProps) {
       .select("id", { count: "exact", head: true })
       .eq("status", "menunggu")
       .then(({ count }) => setPendingCount(count ?? 0))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Auto-close sidebar saat route berubah (mobile)
+  useEffect(() => {
+    onClose?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -53,14 +56,35 @@ export function AdminSidebar({ email }: AdminSidebarProps) {
   }
 
   return (
-    <aside className="flex h-full w-60 flex-col border-r border-border bg-card">
-      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-border px-5">
-        <Image src="/logo.png" alt="Logo Desa" width={28} height={28} className="rounded-md" />
-        <span className="font-serif text-[15px] font-bold leading-tight text-foreground">
-          Potensi Sedayu
-        </span>
+    <aside
+      className={cn(
+        // Mobile: fixed overlay yang slide in/out
+        "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-card",
+        "transition-transform duration-300 ease-in-out",
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        // Desktop (lg+): static, selalu tampil
+        "lg:static lg:translate-x-0 lg:transition-none",
+      )}
+    >
+      {/* Header sidebar */}
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4 lg:h-16 lg:px-5">
+        <div className="flex items-center gap-2.5">
+          <Image src="/logo.png" alt="Logo Desa" width={28} height={28} className="rounded-md" />
+          <span className="font-serif text-[15px] font-bold leading-tight text-foreground">
+            Potensi Sedayu
+          </span>
+        </div>
+        {/* Tombol close — hanya di mobile */}
+        <button
+          onClick={onClose}
+          aria-label="Tutup menu"
+          className="flex size-7 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted lg:hidden"
+        >
+          <X className="size-4" />
+        </button>
       </div>
 
+      {/* Nav */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3">
         {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
           const active      = exact ? pathname === href : pathname.startsWith(href)
@@ -89,6 +113,7 @@ export function AdminSidebar({ email }: AdminSidebarProps) {
         })}
       </nav>
 
+      {/* Footer */}
       <div className="shrink-0 border-t border-border p-3">
         <div className="mb-1.5 rounded-lg bg-muted/50 px-3 py-2">
           <p className="truncate text-[11px] text-muted-foreground">Login sebagai</p>
