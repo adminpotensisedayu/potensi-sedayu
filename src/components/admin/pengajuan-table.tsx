@@ -15,7 +15,7 @@ import {
   CheckCircle, XCircle, Loader2, MapPin, Phone, Mail,
   Clock, Tag, MessageSquare, ExternalLink, Store, User,
   ShieldCheck, ShieldX, Calendar, ChevronRight,
-  Image as ImageIcon, Trash2,
+  Image as ImageIcon, Trash2, X,
 } from "lucide-react"
 
 // ── Types ──────────────────────────────────────────────────────
@@ -33,7 +33,6 @@ type Pengajuan = {
   status: Status; alasan_tolak: string | null
   reviewed_at: string | null; reviewed_by: string | null
 }
-
 type Counts = { semua: number; menunggu: number; disetujui: number; ditolak: number }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -50,20 +49,18 @@ const initials = (name: string) =>
 
 // ── Status chip ────────────────────────────────────────────────
 function StatusChip({ status, sm }: { status: string; sm?: boolean }) {
-  const base = sm
-    ? "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-    : "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-
+  const cls = sm
+    ? "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap"
+    : "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap"
   if (status === "menunggu")
-    return <span className={base + " bg-yellow-100 text-yellow-700 dark:bg-yellow-950/50 dark:text-yellow-400"}>
-      <span className="size-1.5 rounded-full bg-yellow-500 animate-pulse" />
-      Menunggu
+    return <span className={cls + " bg-yellow-100 text-yellow-700 dark:bg-yellow-950/50 dark:text-yellow-400"}>
+      <span className="size-1.5 rounded-full bg-yellow-500 animate-pulse" />Menunggu
     </span>
   if (status === "disetujui")
-    return <span className={base + " bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400"}>
+    return <span className={cls + " bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400"}>
       <CheckCircle className="size-3" />Disetujui
     </span>
-  return <span className={base + " bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400"}>
+  return <span className={cls + " bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400"}>
     <XCircle className="size-3" />Ditolak
   </span>
 }
@@ -105,9 +102,7 @@ function PengajuanCard({ p, onClick }: { p: Pengajuan; onClick: () => void }) {
           <span className="hidden sm:flex items-center gap-0.5"><Tag className="size-2.5" />{p.kategori_nama}</span>
           <span className="flex items-center gap-0.5"><Calendar className="size-2.5" />{fmtTgl(p.created_at)}</span>
         </div>
-        <div className="mt-1.5">
-          <StatusChip status={p.status} sm />
-        </div>
+        <div className="mt-1.5"><StatusChip status={p.status} sm /></div>
       </div>
       <ChevronRight className="size-4 shrink-0 self-center text-muted-foreground/40 transition group-hover:translate-x-0.5" />
     </div>
@@ -146,7 +141,6 @@ function DetailDialog({ p, open, onClose, onApproved, onRejected, onDeleted }: {
   const mapsUrl = p.latitude && p.longitude
     ? "https://www.google.com/maps?q=" + p.latitude + "," + p.longitude
     : null
-
   const isIzin =
     p.memiliki_izin === "__YES__" || p.memiliki_izin === "true" || (p.memiliki_izin as any) === true
 
@@ -157,53 +151,60 @@ function DetailDialog({ p, open, onClose, onApproved, onRejected, onDeleted }: {
       else { toast.success(p.nama_usaha + " disetujui!"); onApproved(p.id); onClose() }
     })
   }
-
   function handleTolak() {
     if (!alasan.trim()) { toast.error("Alasan wajib diisi"); return }
     startTransition(async () => {
       const res = await tolakPengajuan(p.id, alasan)
       if ("error" in res) toast.error(res.error)
-      else {
-        toast.success("Pengajuan ditolak")
-        onRejected(p.id); setShowTolak(false); setAlasan(""); onClose()
-      }
+      else { toast.success("Pengajuan ditolak"); onRejected(p.id); setShowTolak(false); setAlasan(""); onClose() }
     })
   }
-
   function handleHapus() {
     startTransition(async () => {
       const res = await hapusPengajuan(p.id)
       if ("error" in res) toast.error(res.error)
-      else {
-        toast.success("Historis dihapus")
-        onDeleted(p.id); setShowHapus(false); onClose()
-      }
+      else { toast.success("Historis dihapus"); onDeleted(p.id); setShowHapus(false); onClose() }
     })
   }
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="flex h-[100dvh] flex-col gap-0 overflow-hidden p-0 sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-2xl">
+      {/*
+        [&>button]:hidden  → sembunyikan tombol X default shadcn
+        Kita pakai close button sendiri di header biar rapi
+      */}
+      <DialogContent className="flex h-[100dvh] flex-col gap-0 overflow-hidden p-0 [&>button]:hidden sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-2xl">
 
-        {/* Header */}
-        <DialogHeader className="shrink-0 border-b border-border px-4 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
-                {initials(p.nama_usaha)}
-              </div>
-              <div className="min-w-0">
-                <DialogTitle className="truncate font-serif text-base leading-tight sm:text-lg">
-                  {p.nama_usaha}
-                </DialogTitle>
-                <p className="text-xs text-muted-foreground">{p.nama_pemilik} · {fmtTgl(p.created_at)}</p>
-              </div>
+        {/* ── Header ── */}
+        <DialogHeader className="shrink-0 border-b border-border px-3 py-3 sm:px-5 sm:py-4">
+          <div className="flex items-center gap-2.5">
+            {/* Avatar */}
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary sm:size-9 sm:rounded-xl sm:text-sm">
+              {initials(p.nama_usaha)}
             </div>
+            {/* Nama & meta — truncate supaya tidak dorong elemen lain */}
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="truncate font-serif text-sm font-bold leading-tight text-foreground sm:text-base">
+                {p.nama_usaha}
+              </DialogTitle>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {p.nama_pemilik} · {fmtTgl(p.created_at)}
+              </p>
+            </div>
+            {/* Status chip — shrink-0 biar tidak terpotong */}
             <StatusChip status={p.status} sm />
+            {/* Close button eksplisit */}
+            <button
+              onClick={onClose}
+              aria-label="Tutup"
+              className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
           </div>
         </DialogHeader>
 
-        {/* Scrollable body */}
+        {/* ── Scrollable body ── */}
         <div className="flex-1 overflow-y-auto">
 
           {/* Foto */}
@@ -212,8 +213,17 @@ function DetailDialog({ p, open, onClose, onApproved, onRejected, onDeleted }: {
               {fotoList.map((url, i) => (
                 <a key={i} href={url} target="_blank" rel="noreferrer"
                   className="group relative block overflow-hidden bg-muted">
-                  <img src={url} alt={"Foto " + (i + 1)}
-                    className={"w-full object-cover transition group-hover:scale-105 " + (fotoList.length === 1 ? "h-44 sm:h-56" : "h-28 sm:h-36")} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={"Foto " + (i + 1)}
+                    className={"w-full object-cover bg-muted transition group-hover:scale-105 " +
+                      (fotoList.length === 1 ? "h-40 sm:h-52" : "h-24 sm:h-36")}
+                    onError={(e) => {
+                      const el = e.currentTarget.parentElement
+                      if (el) el.style.display = "none"
+                    }}
+                  />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
                     <ExternalLink className="size-4 text-white opacity-0 drop-shadow transition group-hover:opacity-100" />
                   </div>
@@ -223,6 +233,7 @@ function DetailDialog({ p, open, onClose, onApproved, onRejected, onDeleted }: {
           )}
 
           <div className="space-y-5 p-4 sm:p-6">
+
             {/* Pemilik */}
             <div>
               <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Informasi Pemilik</p>
@@ -299,35 +310,40 @@ function DetailDialog({ p, open, onClose, onApproved, onRejected, onDeleted }: {
             {p.status !== "menunggu" && (
               <>
                 <hr className="border-border" />
-                <div className={"rounded-xl p-4 " + (p.status === "disetujui"
-                  ? "bg-green-50 dark:bg-green-950/30"
-                  : "bg-red-50 dark:bg-red-950/30")}>
-                  <div className="flex items-center gap-2 mb-1.5">
+                <div className={"rounded-xl p-4 " +
+                  (p.status === "disetujui"
+                    ? "bg-green-50 dark:bg-green-950/30"
+                    : "bg-red-50 dark:bg-red-950/30")}>
+                  <div className="flex items-center gap-2 mb-1">
                     {p.status === "disetujui"
-                      ? <CheckCircle className="size-4 text-green-600" />
-                      : <XCircle className="size-4 text-red-600" />}
-                    <p className={"text-sm font-semibold " + (p.status === "disetujui"
-                      ? "text-green-700 dark:text-green-400"
-                      : "text-red-700 dark:text-red-400")}>
+                      ? <CheckCircle className="size-4 shrink-0 text-green-600" />
+                      : <XCircle className="size-4 shrink-0 text-red-600" />}
+                    <p className={"text-sm font-semibold " +
+                      (p.status === "disetujui"
+                        ? "text-green-700 dark:text-green-400"
+                        : "text-red-700 dark:text-red-400")}>
                       {p.status === "disetujui" ? "Pengajuan Disetujui" : "Pengajuan Ditolak"}
                     </p>
                   </div>
-                  {p.reviewed_at && <p className="text-xs text-muted-foreground">{fmtTglLengkap(p.reviewed_at)}</p>}
-                  {p.alasan_tolak && <p className="mt-2 text-sm text-red-700 dark:text-red-400">Alasan: {p.alasan_tolak}</p>}
+                  {p.reviewed_at && (
+                    <p className="text-xs text-muted-foreground">{fmtTglLengkap(p.reviewed_at)}</p>
+                  )}
+                  {p.alasan_tolak && (
+                    <p className="mt-1.5 text-sm text-red-700 dark:text-red-400">Alasan: {p.alasan_tolak}</p>
+                  )}
 
-                  {/* ── Hapus historis ── */}
-                  <div className="mt-4 border-t border-current/10 pt-3">
+                  {/* Hapus historis */}
+                  <div className="mt-3 border-t border-black/10 pt-3">
                     {!showHapus ? (
                       <button
                         onClick={() => setShowHapus(true)}
                         className="flex items-center gap-1.5 text-xs text-muted-foreground transition hover:text-red-500"
                       >
-                        <Trash2 className="size-3" />
-                        Hapus historis pengajuan ini
+                        <Trash2 className="size-3" />Hapus historis pengajuan ini
                       </button>
                     ) : (
                       <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/50">
-                        <p className="mb-2.5 text-xs font-semibold text-red-700 dark:text-red-400">
+                        <p className="mb-2 text-xs font-semibold text-red-700 dark:text-red-400">
                           Yakin hapus historis ini? Tidak bisa dibatalkan.
                         </p>
                         <div className="flex gap-2">
@@ -373,7 +389,9 @@ function DetailDialog({ p, open, onClose, onApproved, onRejected, onDeleted }: {
                     onClick={handleTolak}
                     className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                   >
-                    {isPending ? <Loader2 className="size-4 animate-spin" /> : <><XCircle className="size-4" />Konfirmasi Tolak</>}
+                    {isPending
+                      ? <Loader2 className="size-4 animate-spin" />
+                      : <><XCircle className="size-4" />Konfirmasi Tolak</>}
                   </button>
                   <button
                     onClick={() => { setShowTolak(false); setAlasan("") }}
@@ -384,10 +402,13 @@ function DetailDialog({ p, open, onClose, onApproved, onRejected, onDeleted }: {
                 </div>
               </div>
             )}
+
+            {/* Spacer bawah biar konten tidak ketutup footer */}
+            <div className="h-2" />
           </div>
         </div>
 
-        {/* Sticky footer — hanya saat menunggu & bukan mode tolak */}
+        {/* ── Sticky footer actions — hanya saat menunggu ── */}
         {p.status === "menunggu" && !showTolak && (
           <div className="shrink-0 border-t border-border bg-background/95 p-3 backdrop-blur-sm sm:p-4">
             <div className="flex gap-2 sm:gap-3">
@@ -415,7 +436,7 @@ function DetailDialog({ p, open, onClose, onApproved, onRejected, onDeleted }: {
   )
 }
 
-// ── Filter tabs ────────────────────────────────────────────────
+// ── Filter pill tabs ───────────────────────────────────────────
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "menunggu",  label: "Menunggu"  },
   { key: "disetujui", label: "Disetujui" },
@@ -423,17 +444,13 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: "semua",     label: "Semua"     },
 ]
 
-function FilterTabs({
-  active, counts, onChange,
-}: {
-  active: Filter
-  counts: Counts
-  onChange: (f: Filter) => void
+function FilterTabs({ active, counts, onChange }: {
+  active: Filter; counts: Counts; onChange: (f: Filter) => void
 }) {
   return (
     <div className="flex flex-wrap gap-2">
       {FILTERS.map(({ key, label }) => {
-        const count = counts[key]
+        const count    = counts[key]
         const isActive = active === key
         return (
           <button
@@ -449,7 +466,7 @@ function FilterTabs({
             {label}
             <span className={
               "rounded-full px-1.5 py-0.5 text-[10px] font-bold " +
-              (isActive ? "bg-white/20 text-inherit" : "bg-muted text-muted-foreground")
+              (isActive ? "bg-white/20" : "bg-muted text-muted-foreground")
             }>
               {count}
             </span>
@@ -466,16 +483,14 @@ function FilterTabs({
 // ── MAIN EXPORT ────────────────────────────────────────────────
 export function PengajuanTable({
   data: initialData,
-  counts: initialCounts,
 }: {
   data: Pengajuan[]
   counts: Counts
 }) {
-  const [data, setData]       = useState<Pengajuan[]>(initialData)
-  const [filter, setFilter]   = useState<Filter>("menunggu")
+  const [data, setData]         = useState<Pengajuan[]>(initialData)
+  const [filter, setFilter]     = useState<Filter>("menunggu")
   const [selected, setSelected] = useState<Pengajuan | null>(null)
 
-  // Hitung counts dari data lokal (bukan initialCounts)
   const counts: Counts = {
     semua:     data.length,
     menunggu:  data.filter((p) => p.status === "menunggu").length,
@@ -489,7 +504,7 @@ export function PengajuanTable({
     menunggu:  "Tidak ada pengajuan yang menunggu review",
     disetujui: "Belum ada pengajuan yang disetujui",
     ditolak:   "Belum ada pengajuan yang ditolak",
-    semua:     "Belum ada pengajuan sama sekali",
+    semua:     "Belum ada pengajuan",
   }
 
   function markApproved(id: string) {
@@ -504,19 +519,14 @@ export function PengajuanTable({
 
   return (
     <>
-      {/* Filter pills — di atas, wrap di mobile */}
       <FilterTabs active={filter} counts={counts} onChange={setFilter} />
-
-      {/* List */}
       <div className="mt-4 space-y-2">
         {filtered.length === 0
           ? <EmptyState label={emptyLabels[filter]} />
           : filtered.map((p) => (
               <PengajuanCard key={p.id} p={p} onClick={() => setSelected(p)} />
-            ))
-        }
+            ))}
       </div>
-
       {selected && (
         <DetailDialog
           p={selected}
