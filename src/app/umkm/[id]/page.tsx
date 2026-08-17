@@ -45,7 +45,12 @@ export default async function UmkmDetailPage({ params }: { params: Promise<{ id:
     : allFotos
 
   // WhatsApp
-  const waNumber = u.whatsapp ? String(u.whatsapp).replace(/\D/g, "") : null
+  let waNumber = u.whatsapp ? String(u.whatsapp).replace(/\D/g, "") : null
+  // Jika nomor diawali angka 0, ubah menjadi 62
+  if (waNumber && waNumber.startsWith("0")) {
+    waNumber = "62" + waNumber.slice(1)
+  }
+  
   const waText   = encodeURIComponent("Halo, saya tertarik dengan usaha " + u.nama_usaha)
   const waUrl    = waNumber ? "https://wa.me/" + waNumber + "?text=" + waText : null
 
